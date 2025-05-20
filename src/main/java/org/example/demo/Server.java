@@ -3,10 +3,13 @@ package org.example.demo;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -23,7 +26,7 @@ public class Server {
     private static final HashMap<String, PrintWriter> onlineOut = new HashMap<>(); // （在线用户，通信输出）
     private static final HashMap<String, String> matching = new HashMap<>(); // （匹配中的用户，游戏模式）
     private static final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1); // 定时器
-    private static final HashMap<String, Game> games = new HashMap<>(); // （用户名，所在对局）
+    private static final HashMap<String, org.example.demo.Server.Game> games = new HashMap<>(); // （用户名，所在对局）
     private static final int port = 12345;
     private static final long sleepTime = 600 * 1000; // 瞌睡时间设置为10分钟
     private static Map<String, String> users; // （用户名，密码）
@@ -36,7 +39,7 @@ public class Server {
                 loadUsers();
                 loadRecords();
                 System.out.println("服务器在" + port + "苏醒了！");
-                scheduler.scheduleAtFixedRate(Server::broadcastOnlinePlayers, 0, 2, TimeUnit.SECONDS);
+                scheduler.scheduleAtFixedRate(org.example.demo.Server::broadcastOnlinePlayers, 0, 2, TimeUnit.SECONDS);
                 AtomicLong lastConn = new AtomicLong(System.currentTimeMillis());
                 Thread serverStopped = new Thread(() -> {
                     while (true) {
@@ -57,7 +60,7 @@ public class Server {
                     Socket clientSocket = serverSocket.accept();
                     System.out.println("Client connected " + clientSocket.getInetAddress());
                     lastConn.set(System.currentTimeMillis());
-                    pool.execute(new ClientHandler(clientSocket));
+                    pool.execute(new org.example.demo.Server.ClientHandler(clientSocket));
                 }
             } catch (IOException e) {
                 System.out.println("服务器粗错啦: " + e.getMessage());
@@ -96,7 +99,7 @@ public class Server {
             while ((line = reader.readLine()) != null) {
                 String[] parts = line.split(":");
                 if (parts.length == 2) {
-                    Server.users.put(parts[0], parts[1]);
+                    org.example.demo.Server.users.put(parts[0], parts[1]);
                 }
             }
         } catch (IOException e) {
@@ -128,6 +131,7 @@ public class Server {
         }
     }
 
+
     public static void saveRecords() {
         try (BufferedWriter writer = new BufferedWriter(new FileWriter("src/main/resources/org/example/demo/records.txt"))) {
             for (Map.Entry<String, List<String>> entry : records.entrySet()) {
@@ -142,13 +146,60 @@ public class Server {
         }
     }
 
+    //存档保存 用Hashy值：根据Hashy生成规则
+    //仿照loadUser和saveUser
     private static String loadGame(String name) {
         Path filePath = Paths.get("src/main/resources/org/example/demo/savedGame/" + name + ".txt");
         try {
-            return Files.readString(filePath).trim();
+            BufferedReader reader = new BufferedReader(new FileReader("src/main/resources/org/example/demo/saveList.txt"));
+
+            String GameRaw = Files.readString(filePath).trim();
+            String hashCode = generateKey(GameRaw);
+
+            String line;
+            while((line = reader.readLine()) != null){
+                String[] parts = line.split(":");
+                if(parts[0].equals(name)&&parts[1].equals(hashCode)) return GameRaw;
+            }
+
+//            System.out.println("文件损坏");
+            return "Broken";
         } catch (IOException e) {
             System.out.println(e.getMessage());
             return null;
+        }
+    }
+
+    private static void saveGame(String name, Game g){
+        Path filePath = Paths.get("src/main/resources/org/example/demo/savedGame/" + name + ".txt");
+        Path HashPath = Paths.get("src/main/resources/org/example/demo/saveList.txt");
+
+        String raw = g.curr + ":" + g.p1 + ":" + g.p2 + ":" + g.board;
+        String hashCode = generateKey(raw);
+        try {
+            if (Files.exists(filePath)) {
+                Files.writeString(filePath, "", StandardOpenOption.WRITE);
+            } else {
+                Files.createFile(filePath);
+            }
+            Files.writeString(filePath, raw);
+
+            if (!Files.exists(HashPath)) Files.createFile(HashPath);
+
+            List<String> lines = Files.readAllLines(HashPath);
+            boolean found = false;
+            for (int i = 0; i < lines.size(); i++) {
+                if (lines.get(i).startsWith(name + ":")) {
+                    lines.set(i, name+":"+hashCode);
+                    found = true;
+                    break;
+                }
+            }
+            if(!found) lines.add(name+":"+hashCode);
+
+            Files.write(HashPath, lines, StandardOpenOption.TRUNCATE_EXISTING);
+        } catch (IOException e) {
+            System.out.println(e.getMessage());
         }
     }
 
@@ -164,7 +215,7 @@ public class Server {
 
         public void checkGame() {
             if (games.containsKey(name)) {
-                Game g = games.get(name);
+                org.example.demo.Server.Game g = games.get(name);
                 if (g.u1.equals(name)) {
                     out.println("reGame:" + g.u2 + ":" + g.curr + ":" + g.p1 + ":" + g.p2 + ":" + g.board + ":" + g.mode);
                 } else {
@@ -179,7 +230,7 @@ public class Server {
             }
         }
 
-        private String getRecord(String name, String res, String oppo, Game game) {
+        private String getRecord(String name, String res, String oppo, org.example.demo.Server.Game game) {
             long diff = (System.currentTimeMillis() - Long.parseLong(game.time)) / 1000;
             return name + "  《" + res + "》  " + oppo + "   " + "   " + String.format("%d分%d秒", diff / 60, diff % 60) + "   " + game.start;
         }
@@ -255,7 +306,7 @@ public class Server {
                                             forward(waiting, "be matched:" + name + ":" + type);
                                         }
                                     } else { // 单机直接传送board
-                                        games.put(name, new Game(name, name + "2", name, "1", "1", parts[1], "单机模式", ZonedDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")), String.valueOf(System.currentTimeMillis())));
+                                        games.put(name, new org.example.demo.Server.Game(name, name + "2", name, "1", "1", parts[1], "单机模式", ZonedDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")), String.valueOf(System.currentTimeMillis())));
                                     }
                                 } else if (parts.length == 3) {
                                     forward(parts[2], "be invited:" + name);
@@ -265,7 +316,7 @@ public class Server {
                                     matching.remove(name);
                                     matching.remove(parts[1]);
                                     String startTime = ZonedDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
-                                    Game g = new Game(parts[1], name, parts[3], "1", "1", parts[4], parts[5], startTime, String.valueOf(System.currentTimeMillis()));
+                                    org.example.demo.Server.Game g = new org.example.demo.Server.Game(parts[1], name, parts[3], "1", "1", parts[4], parts[5], startTime, String.valueOf(System.currentTimeMillis()));
                                     games.put(name, g);
                                     games.put(parts[1], g);
                                     forward(parts[1], "invite Result:" + name + ":" + parts[2] + ":" + parts[3] + ":" + parts[4] + ":" + parts[5]);
@@ -274,7 +325,7 @@ public class Server {
                                 }
                             } else if ("game".equals(parts[0])) {
                                 if (games.containsKey(name)) {
-                                    Game g = games.get(name);
+                                    org.example.demo.Server.Game g = games.get(name);
                                     switch (parts[1]) {
                                         case "over" -> {
                                             boolean over = false;
@@ -304,6 +355,9 @@ public class Server {
                                             }
                                             if (over) {
                                                 games.remove(name);
+
+                                                saveGame(name,g);
+
                                                 System.out.println("游戏结束，" + name + "的对局已被删除");
                                                 if (!"单机模式".equals(g.mode)) {
                                                     games.remove(parts[3]);
@@ -331,12 +385,16 @@ public class Server {
                                         case "load" -> {
                                             String load = loadGame(name);
                                             if (load != null) {
-                                                String[] loads = load.split(":");
-                                                g.curr = loads[0];
-                                                g.p1 = loads[1];
-                                                g.p2 = loads[2];
-                                                g.board = loads[3];
-                                                out.println("game:load:" + g.curr + ":" + g.p1 + ":" + g.p2 + ":" + g.board);
+                                                // 无法输出？
+                                                if (load.equals("Broken")) out.println("存档文件已损坏");
+                                                else {
+                                                    String[] loads = load.split(":");
+                                                    g.curr = loads[0];
+                                                    g.p1 = loads[1];
+                                                    g.p2 = loads[2];
+                                                    g.board = loads[3];
+                                                    out.println("game:load:" + g.curr + ":" + g.p1 + ":" + g.p2 + ":" + g.board);
+                                                }
                                             }
                                         }
                                         default -> {
@@ -369,18 +427,8 @@ public class Server {
                         onlineOut.remove(name);
                         // 联机模式下等待重联或对方结束比赛，单机自动保存
                         if (games.containsKey(name) && "单机模式".equals(games.get(name).mode)) {
-                            Game g = games.remove(name);
-                            Path filePath = Paths.get("src/main/resources/org/example/demo/savedGame/" + name + ".txt");
-                            try {
-                                if (Files.exists(filePath)) {
-                                    Files.writeString(filePath, "", StandardOpenOption.WRITE);
-                                } else {
-                                    Files.createFile(filePath);
-                                }
-                                Files.writeString(filePath, g.curr + ":" + g.p1 + ":" + g.p2 + ":" + g.board);
-                            } catch (IOException e) {
-                                System.out.println(e.getMessage());
-                            }
+                            org.example.demo.Server.Game g = games.remove(name);
+                            saveGame(name,g);
                         }
                     }
                     if (in != null) in.close();
@@ -393,6 +441,20 @@ public class Server {
                     System.out.println(e.getMessage());
                 }
             }
+        }
+    }
+
+    public static String generateKey(String input) {
+        try {
+            MessageDigest md = MessageDigest.getInstance("SHA-256");
+            byte[] hash = md.digest(input.getBytes(StandardCharsets.UTF_8));
+            StringBuilder sb = new StringBuilder();
+            for (byte b : hash) {
+                sb.append(String.format("%02x", b));
+            }
+            return sb.toString();  // 返回 hex 字符串
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException(e);
         }
     }
 
