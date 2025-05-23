@@ -1,5 +1,10 @@
 package org.example.demo;
 
+import javax.crypto.Cipher;
+import javax.crypto.KeyGenerator;
+import javax.crypto.SecretKey;
+import javax.crypto.spec.IvParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -10,12 +15,10 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -146,7 +149,57 @@ public class Server {
         }
     }
 
-    //存档保存 用Hashy值：根据Hashy生成规则
+    // Method to encrypt a file and return the encrypted string
+    public static String encryptFile(Path filePath) throws Exception {
+        // Read file into bytes
+        byte[] fileData = Files.readAllBytes(filePath);
+
+        // Generate a new AES key
+        KeyGenerator keyGen = KeyGenerator.getInstance("AES");
+        keyGen.init(128);
+        SecretKey secretKey = keyGen.generateKey();
+
+        // Generate IV
+        byte[] iv = new byte[16];
+        new SecureRandom().nextBytes(iv);
+        IvParameterSpec ivParams = new IvParameterSpec(iv);
+
+        // Encrypt data
+        Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
+        cipher.init(Cipher.ENCRYPT_MODE, secretKey, ivParams);
+        byte[] encryptedData = cipher.doFinal(fileData);
+
+        // Encode key, IV, and encrypted data to a string
+
+        return Base64.getEncoder().encodeToString(secretKey.getEncoded()) + ":" +
+                Base64.getEncoder().encodeToString(iv) + ":" +
+                Base64.getEncoder().encodeToString(encryptedData);
+    }
+
+    // Method to decrypt the string back to the file
+    public static void decryptToFile(String encryptedString, String outputFilePath) throws Exception {
+        // Split the string to retrieve key, IV, and encrypted data
+        String[] parts = encryptedString.split(":");
+        byte[] keyBytes = Base64.getDecoder().decode(parts[0]);
+        byte[] iv = Base64.getDecoder().decode(parts[1]);
+        byte[] encryptedData = Base64.getDecoder().decode(parts[2]);
+
+        // Rebuild the secret key
+        SecretKey secretKey = new SecretKeySpec(keyBytes, "AES");
+
+        // Decrypt data
+        IvParameterSpec ivParams = new IvParameterSpec(iv);
+        Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
+        cipher.init(Cipher.DECRYPT_MODE, secretKey, ivParams);
+        byte[] originalData = cipher.doFinal(encryptedData);
+
+        // Write the original data back to the file
+        try (FileOutputStream fos = new FileOutputStream(outputFilePath)) {
+            fos.write(originalData);
+        }
+    }
+
+    //存档保存 用Hashy值：根据Hashyz生成规则
     //仿照loadUser和saveUser
     private static String loadGame(String name) {
         Path filePath = Paths.get("src/main/resources/org/example/demo/savedGame/" + name + ".txt");
@@ -159,12 +212,21 @@ public class Server {
             String line;
             while((line = reader.readLine()) != null){
                 String[] parts = line.split(":");
-                if(parts[0].equals(name)&&parts[1].equals(hashCode)) return GameRaw;
+                if(parts[0].equals(name)){
+                    if (parts[1].equals(hashCode)) {
+                        return GameRaw;
+                    }
+                    else {
+                        Path encryptedDataPath = Paths.get("src/main/resources/org/example/demo/savedGame/" + name + "_bak.txt");
+                        String encryptedGame = Files.readString(encryptedDataPath).trim();
+                        decryptToFile(encryptedGame, "src/main/resources/org/example/demo/savedGame/" + name + ".txt");
+                        return Files.readString(filePath).trim();
+                    }
+                }
             }
-
 //            System.out.println("文件损坏");
             return "Broken";
-        } catch (IOException e) {
+        } catch (Exception e) {
             System.out.println(e.getMessage());
             return null;
         }
@@ -173,6 +235,7 @@ public class Server {
     private static void saveGame(String name, Game g){
         Path filePath = Paths.get("src/main/resources/org/example/demo/savedGame/" + name + ".txt");
         Path HashPath = Paths.get("src/main/resources/org/example/demo/saveList.txt");
+        Path encryptedDataPath = Paths.get("src/main/resources/org/example/demo/savedGame/" + name + "_bak.txt");
 
         String raw = g.curr + ":" + g.p1 + ":" + g.p2 + ":" + g.board;
         String hashCode = generateKey(raw);
@@ -183,6 +246,15 @@ public class Server {
                 Files.createFile(filePath);
             }
             Files.writeString(filePath, raw);
+
+            String encryptedGame = encryptFile(filePath);
+            System.out.println(encryptedGame);
+            if (Files.exists(encryptedDataPath)) {
+                Files.writeString(encryptedDataPath, "", StandardOpenOption.WRITE);
+            } else {
+                Files.createFile(encryptedDataPath);
+            }
+            Files.writeString(encryptedDataPath, encryptedGame, StandardOpenOption.WRITE);
 
             if (!Files.exists(HashPath)) Files.createFile(HashPath);
 
@@ -198,7 +270,7 @@ public class Server {
             if(!found) lines.add(name+":"+hashCode);
 
             Files.write(HashPath, lines, StandardOpenOption.TRUNCATE_EXISTING);
-        } catch (IOException e) {
+        } catch (Exception e) {
             System.out.println(e.getMessage());
         }
     }
