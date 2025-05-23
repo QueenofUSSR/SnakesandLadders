@@ -314,8 +314,26 @@ public class Server {
                 in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
                 out = new PrintWriter(clientSocket.getOutputStream(), true);
                 String message;
+                boolean isGuest = false;
                 while ((message = in.readLine()) != null) {
                     System.out.println("Client" + clientSocket.getInetAddress() + "/" + name + ": " + message);
+                    if (isGuest) {
+                        if (message.contains(":")) {
+                            String[] parts = message.split(":");
+                            if ("game".equals(parts[0])) {
+                                switch (parts[1]) {
+                                    case "over" -> {
+                                        out.println("logout successfully");
+                                        isGuest = false;
+                                        System.out.println("guest left");
+                                    }
+                                    case "save" -> out.println("game:save");
+                                    case "load" -> out.println("game:load");
+                                    case "reset" -> out.println("game:reset accept");
+                                }
+                            }
+                        }
+                    }
                     if (message.contains(":")) {
                         String[] parts = message.split(":");
                         if (name == null) {
@@ -471,6 +489,7 @@ public class Server {
                                         }
                                         case "save" -> {
                                             saveGame(name,g);
+                                            out.println("game:save");
                                         }
                                         default -> {
                                             g.curr = parts[1];
@@ -489,6 +508,9 @@ public class Server {
                         }
                     } else if ("exit".equals(message)) {
                         break;
+                    } else if ("guest".equals(message)) {
+                        isGuest = true;
+                        out.println("guest accepted");
                     } else {
                         out.println("invalid message: " + message);
                     }
