@@ -38,6 +38,7 @@ public class Application extends javafx.application.Application {
     private final ListView<String> historyRecordList = new ListView<>();
     private final List<Alert> alerts = new ArrayList<>();
     boolean openRecord = false;
+    boolean  isGuest = false;
     Controller controller;
 
     public static void main(String[] args) {
@@ -192,11 +193,15 @@ public class Application extends javafx.application.Application {
         Button loginButton = new Button("登录");
         loginButton.setLayoutX(w / 2 + 30);
         loginButton.setLayoutY(h / 2 + 40);
+        Button guestLoginButton = new Button("游客模式");
+        guestLoginButton.setLayoutX(w / 2 + 130);
+        guestLoginButton.setLayoutY(h / 2 + 40);
         Button exitButton = new Button("退出游戏");
         exitButton.setLayoutX(w - 75);
         exitButton.setLayoutY(h - 30);
         registerButton.setOnAction(_ -> handleLogin(stage, "register", userTextField.getText(), pwBox.getText()));
         loginButton.setOnAction(_ -> handleLogin(stage, "login", userTextField.getText(), pwBox.getText()));
+        guestLoginButton.setOnAction(_ -> handleLogin(stage, "guest", userTextField.getText(), pwBox.getText()));
         exitButton.setOnAction(_ -> handleLogin(stage, "exit", userTextField.getText(), pwBox.getText()));
         pane.setBackground(new Background(background));
         pane.getChildren().add(userLabel);
@@ -205,14 +210,36 @@ public class Application extends javafx.application.Application {
         pane.getChildren().add(pwBox);
         pane.getChildren().add(registerButton);
         pane.getChildren().add(loginButton);
+        pane.getChildren().add(guestLoginButton);
         pane.getChildren().add(exitButton);
         return pane;
     }
 
     private void handleLogin(Stage stage, String choice, String username, String password) {
         System.out.println(choice + ": 用户名=" + username + ", 密码=" + password + "->" + hashPassword(password));
+        isGuest = false;
         if ("exit".equals(choice)) {
             exit(stage);
+        }
+        else if ("guest".equals(choice)) {
+            out.println("guest");
+            String response = null;
+            try {
+                response = in.readLine();
+            } catch (IOException e) {
+                System.out.println(e.getMessage());
+            }
+            System.out.println("Server1: " + response);
+            if ("guest accepted".equals(response)) {
+                isGuest = true;
+                name = "guest";
+                VBox lobbyRoot = new VBox(10);
+                lobbyThread = new Thread(() -> handleLobby(stage, lobbyRoot));
+                lobbyThread.start();
+                int[][] board = setupBoard();
+                handleGame(stage, name + "2", name, 1, 1, board, "单机模式");
+                out.println("invite:" + getStringBoard(board));
+            }
         } else {
             out.println(choice + ":" + username + ":" + hashPassword(password));
             String response = null;
@@ -223,6 +250,7 @@ public class Application extends javafx.application.Application {
             }
             System.out.println("Server1: " + response);
             if ("login successfully".equals(response)) {
+                System.out.println("laoding lobby pane");
                 name = username;
                 lobbyPane(stage);
             }
@@ -272,6 +300,7 @@ public class Application extends javafx.application.Application {
                             stage.show();
                         });
                         name = null;
+                        isGuest = false;
                         break;
                     }
                     if (response.startsWith("players:")) {
@@ -384,7 +413,7 @@ public class Application extends javafx.application.Application {
                                 if (controller != null) {
                                     Alert alt = switch (parts[2]) {
                                         case "opponent escape" ->
-                                                createAlert("对局结束", "大获全胜", "666对手被你吓破跑了");
+                                                createAlert("对局结束", "大获全胜", "666对手被你吓跑了");
                                         case "victory" ->
                                                 createAlert("对局结束", "胜利", controller.mode != 0 ? "恭喜你获得胜利(^o^)" : "恭喜玩家1获得胜利(^o^)");
                                         case "defeat" ->
@@ -412,12 +441,26 @@ public class Application extends javafx.application.Application {
                                     }
                                 });
                             }
-                            case "reset accept" ->
-                                    handleGame(stage, parts[2], parts[3], 1, 1, parseBoard(parts[4]), parts[5]);
-                            case "load" ->
-                                    handleGame(stage, name + "2", parts[2], Integer.parseInt(parts[3]), Integer.parseInt(parts[4]), parseBoard(parts[5]), "单机模式");
-                            case "save" ->
-                                    createAlert("系统通知", "保存游戏", "保存成功！");
+                            case "reset accept" -> {
+                                if (isGuest) handleGame(stage, name + "2", name, 1, 1, setupBoard(), "单机模式");
+                                else handleGame(stage, parts[2], parts[3], 1, 1, parseBoard(parts[4]), parts[5]);
+                            }
+                            case "load" -> {
+                                Platform.runLater(() -> {
+                                    if (isGuest){
+                                        Alert alt;
+                                        alt = createAlert("系统通知", "请登录游戏", "保存功能未解锁");
+                                        alt.showAndWait();
+                                    } else handleGame(stage, name + "2", parts[2], Integer.parseInt(parts[3]), Integer.parseInt(parts[4]), parseBoard(parts[5]), "单机模式");
+                                });
+                            }
+                            case "save" -> {
+                                Platform.runLater(() -> {
+                                    Alert alt;
+                                    alt = isGuest ? createAlert("系统通知", "请登录游戏", "充值648解锁保存功能") : createAlert("系统通知", "保存游戏", "保存成功！");
+                                    alt.showAndWait();
+                                });
+                            }
                             default -> {
                                 if (controller != null) {
                                     controller.oppoRoll(Integer.parseInt(parts[1]));
