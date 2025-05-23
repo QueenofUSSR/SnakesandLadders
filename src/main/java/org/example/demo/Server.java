@@ -469,6 +469,9 @@ public class Server {
                                                 }
                                             }
                                         }
+                                        case "save" -> {
+                                            saveGame(name,g);
+                                        }
                                         default -> {
                                             g.curr = parts[1];
                                             if (g.u1.equals(g.curr)) {
