@@ -31,6 +31,7 @@ public class Controller {
     public Button rollButt1;
     public Button rollButt2;
     public Button loadBtn;
+    public Button saveBtn;
     @FXML
     public Label userLabel1;
     @FXML
@@ -263,4 +264,6 @@ public class Controller {
     public void handleLoad() {
         out.println("game:load");
     }
+
+    public void handleSave() { out.println("game:save"); }
 }

@@ -416,6 +416,8 @@ public class Application extends javafx.application.Application {
                                     handleGame(stage, parts[2], parts[3], 1, 1, parseBoard(parts[4]), parts[5]);
                             case "load" ->
                                     handleGame(stage, name + "2", parts[2], Integer.parseInt(parts[3]), Integer.parseInt(parts[4]), parseBoard(parts[5]), "单机模式");
+                            case "save" ->
+                                    createAlert("系统通知", "保存游戏", "保存成功！");
                             default -> {
                                 if (controller != null) {
                                     controller.oppoRoll(Integer.parseInt(parts[1]));
