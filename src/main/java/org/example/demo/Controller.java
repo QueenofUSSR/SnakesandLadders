@@ -152,15 +152,15 @@ public class Controller {
 
         Timeline timeline = new Timeline();
         timeline.getKeyFrames().add(new KeyFrame(Duration.ZERO, event -> {
-            diceLabel.setText("Player1\n骰子点数：" + (r.nextInt(6) + 1));
+            diceLabel.setText(name+"\n骰子点数：" + (r.nextInt(6) + 1));
         }));
         for (int i = 1; i <= 10; i++) {
             timeline.getKeyFrames().add(new KeyFrame(Duration.millis(50 * i), event -> {
-                diceLabel.setText("Player1\n骰子点数：" + (r.nextInt(6) + 1));
+                diceLabel.setText(name+"\n骰子点数：" + (r.nextInt(6) + 1));
             }));
         }
         timeline.getKeyFrames().add(new KeyFrame(Duration.millis(600), event -> {
-            diceLabel.setText("Player1\n骰子点数：" + num);
+            diceLabel.setText(name+"\n骰子点数：" + num);
         }));
 
         timeline.play();
@@ -190,15 +190,15 @@ public class Controller {
 
         Timeline timeline = new Timeline();
         timeline.getKeyFrames().add(new KeyFrame(Duration.ZERO,event->{
-            diceLabel.setText("Player2\n骰子点数：" + (r.nextInt(6) + 1));
+            diceLabel.setText(opponent+"\n骰子点数：" + (r.nextInt(6) + 1));
         }));
         for(int i=1;i<=10;i++){
             timeline.getKeyFrames().add(new KeyFrame(Duration.millis(50*i),event->{
-                diceLabel.setText("Player2\n骰子点数：" + (r.nextInt(6) + 1));
+                diceLabel.setText(opponent+"\n骰子点数：" + (r.nextInt(6) + 1));
             }));
         }
         timeline.getKeyFrames().add(new KeyFrame(Duration.millis(600),event->{
-            diceLabel.setText("Player2\n骰子点数：" + num);
+            diceLabel.setText(opponent+"\n骰子点数：" + num);
         }));
 
         timeline.play();

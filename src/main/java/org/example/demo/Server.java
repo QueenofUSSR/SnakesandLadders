@@ -199,8 +199,7 @@ public class Server {
         }
     }
 
-    //存档保存 用Hashy值：根据Hashyz生成规则
-    //仿照loadUser和saveUser
+
     private static String loadGame(String name) {
         Path filePath = Paths.get("src/main/resources/org/example/demo/savedGame/" + name + ".txt");
         try {
@@ -232,6 +231,7 @@ public class Server {
         }
     }
 
+    //存档保存 根据Hashy生成规则
     private static void saveGame(String name, Game g){
         Path filePath = Paths.get("src/main/resources/org/example/demo/savedGame/" + name + ".txt");
         Path HashPath = Paths.get("src/main/resources/org/example/demo/saveList.txt");
