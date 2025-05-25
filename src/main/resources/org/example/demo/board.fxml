@@ -25,6 +25,8 @@
             <Button text="退出本局" onAction="#handleEscape" styleClass="button"/>
             <Button fx:id="saveBtn" text="保存游戏" onAction="#handleSave" styleClass="button"/>
             <Button fx:id="loadBtn" text="读取存档" onAction="#handleLoad" styleClass="button"/>
+
+            <Label fx:id="diceLabel"  alignment="CENTER" prefWidth="100" prefHeight="30" />
         </VBox>
     </HBox>
 </VBox>
