@@ -475,7 +475,6 @@ public class Server {
                                         case "load" -> {
                                             String load = loadGame(name);
                                             if (load != null) {
-                                                // 无法输出？
                                                 if (load.equals("Broken")) out.println("存档文件已损坏");
                                                 else {
                                                     String[] loads = load.split(":");

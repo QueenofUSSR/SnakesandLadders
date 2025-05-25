@@ -50,6 +50,9 @@ public class Controller {
     private int[][] board;
 
     @FXML
+    private Label diceLabel;
+
+    @FXML
     public void initialize(PrintWriter out, String name, String oppo, String curr, int p1, int p2, int[][] board, int mode) {
         this.out = out;
         this.name = name;
@@ -144,22 +147,39 @@ public class Controller {
     // 生成一个点数
     @FXML
     public void handleRoll1(ActionEvent actionEvent) {
-        Random r = new Random(); // 可在此添加道具
-        int num = r.nextInt(6) + 1;
-//        int num = 2; // 贝利亚测试连续跳跃
-        System.out.println("自己点数为：" + num);
-        int oldPos = Integer.parseInt(posLabel1.getText());
-        int newPos = oldPos + num;
-        newPos = multiMovePiece(playerCircles[0], posLabel1, oldPos, newPos, true);
-        if (newPos == 100) {
-            out.println("game:over:win:" + opponent + ":1");
-        } else {
-            out.println("game:" + opponent + ":" + num + ":" + newPos);
+        Random r = new Random();
+        int num = r.nextInt(6) + 1; // 最终的骰子点数
+
+        Timeline timeline = new Timeline();
+        timeline.getKeyFrames().add(new KeyFrame(Duration.ZERO, event -> {
+            diceLabel.setText("Player1\n骰子点数：" + (r.nextInt(6) + 1));
+        }));
+        for (int i = 1; i <= 10; i++) {
+            timeline.getKeyFrames().add(new KeyFrame(Duration.millis(50 * i), event -> {
+                diceLabel.setText("Player1\n骰子点数：" + (r.nextInt(6) + 1));
+            }));
         }
-        rollButt1.setDisable(true);
-        if (mode == 0) { // 单机
-            rollButt2.setDisable(false);
-        }
+        timeline.getKeyFrames().add(new KeyFrame(Duration.millis(600), event -> {
+            diceLabel.setText("Player1\n骰子点数：" + num);
+        }));
+
+        timeline.play();
+
+        timeline.setOnFinished(event -> {
+            System.out.println("自己点数为：" + num);
+            int oldPos = Integer.parseInt(posLabel1.getText());
+            int newPos = oldPos + num;
+            newPos = multiMovePiece(playerCircles[0], posLabel1, oldPos, newPos, true);
+            if (newPos == 100) {
+                out.println("game:over:win:" + opponent + ":1");
+            } else {
+                out.println("game:" + opponent + ":" + num + ":" + newPos);
+            }
+            rollButt1.setDisable(true);
+            if (mode == 0) { // 单机
+                rollButt2.setDisable(false);
+            }
+        });
     }
 
     // 单机时生成另一个点数
@@ -167,17 +187,35 @@ public class Controller {
     public void handleRoll2(ActionEvent actionEvent) {
         Random r = new Random();
         int num = r.nextInt(6) + 1;
-        System.out.println(opponent + "点数为：" + num);
-        int oldPos = Integer.parseInt(posLabel2.getText());
-        int newPos = oldPos + num;
-        newPos = multiMovePiece(playerCircles[1], posLabel2, oldPos, newPos, false);
-        if (newPos == 100) {
-            out.println("game:over:win:" + name + ":2");
-        } else {
-            out.println("game:" + name + ":" + num + ":" + newPos);
+
+        Timeline timeline = new Timeline();
+        timeline.getKeyFrames().add(new KeyFrame(Duration.ZERO,event->{
+            diceLabel.setText("Player2\n骰子点数：" + (r.nextInt(6) + 1));
+        }));
+        for(int i=1;i<=10;i++){
+            timeline.getKeyFrames().add(new KeyFrame(Duration.millis(50*i),event->{
+                diceLabel.setText("Player2\n骰子点数：" + (r.nextInt(6) + 1));
+            }));
         }
-        rollButt1.setDisable(false);
-        rollButt2.setDisable(true);
+        timeline.getKeyFrames().add(new KeyFrame(Duration.millis(600),event->{
+            diceLabel.setText("Player2\n骰子点数：" + num);
+        }));
+
+        timeline.play();
+
+        timeline.setOnFinished(event ->{
+            System.out.println(opponent + "点数为：" + num);
+            int oldPos = Integer.parseInt(posLabel2.getText());
+            int newPos = oldPos + num;
+            newPos = multiMovePiece(playerCircles[1], posLabel2, oldPos, newPos, false);
+            if (newPos == 100) {
+                out.println("game:over:win:" + name + ":2");
+            } else {
+                out.println("game:" + name + ":" + num + ":" + newPos);
+            }
+            rollButt1.setDisable(false);
+            rollButt2.setDisable(true);
+        });
     }
 
     // 服务器传回对方点数
