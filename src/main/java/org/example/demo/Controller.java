@@ -3,9 +3,10 @@ package org.example.demo;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.application.Platform;
-import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.geometry.Pos;
+import javafx.scene.canvas.Canvas;
+import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.layout.GridPane;
@@ -67,6 +68,7 @@ public class Controller {
         for (int i = 0; i < 10; i++) {
             for (int j = 0; j < 10; j++) {
                 // 创建一个 VBox 布局容器，以便垂直排列标签
+                int[] tansPos = transformPosition(i * 10 + j);
                 StackPane cell = new StackPane();
                 VBox vbox = new VBox();
                 vbox.setPrefSize(50, 50);
@@ -77,18 +79,20 @@ public class Controller {
                 effectLabel.setTextFill(Color.BLACK);
                 Color cellColor;
                 if (board[i][j] > 0) {
-                    cellColor = Color.WHITE;
+                    cellColor = Color.DEEPSKYBLUE;
+                    addSnakeOrLadder(gameBoard, transformPosition(i * 10 + j), transformPosition(i * 10 + j + board[i][j]), true);
                 } else if (board[i][j] < 0) {
-                    cellColor = Color.BLACK;
+                    cellColor = Color.ORANGERED;
                     positionLabel.setTextFill(Color.WHITE);
                     effectLabel.setTextFill(Color.WHITE);
+                    addSnakeOrLadder(gameBoard, transformPosition(i * 10 + j), transformPosition(i * 10 + j + board[i][j]), false);
                 } else {
                     effectLabel.setVisible(false);
-                    cellColor = switch ((i * 10 + j) % 4) {
-                        case 0 -> Color.GREEN;
-                        case 1 -> Color.ORANGE;
-                        case 2 -> Color.LIGHTBLUE;
-                        case 3 -> Color.PINK;
+                    cellColor = switch ((tansPos[0] * 10 + tansPos[1]) % 4) {
+                        case 0 -> Color.LIGHTYELLOW;
+                        case 1 -> Color.LIGHTPINK;
+                        case 2 -> Color.YELLOW;
+                        case 3 -> Color.WHITE;
                         default -> Color.TRANSPARENT;
                     };
                 }
@@ -96,7 +100,6 @@ public class Controller {
                 vbox.getChildren().add(positionLabel);
                 cell.getChildren().add(vbox);
                 cell.getChildren().add(effectLabel);
-                int[] tansPos = transformPosition(i * 10 + j);
                 gridBoard.add(cell, tansPos[1], tansPos[0]);
             }
         }
@@ -114,6 +117,32 @@ public class Controller {
             rollButt2.setOnAction(_ -> handleCheck());
             loadBtn.setVisible(false);
         }
+    }
+
+    private void addSnakeOrLadder(Pane pane, int[] src, int[] dest, boolean isLadder) {
+        Canvas canvas = new Canvas(600, 600); // 根据需要设置尺寸
+        GraphicsContext gc = canvas.getGraphicsContext2D();
+        Color color = isLadder ? Color.rgb(100, 100, 255, 0.7) : Color.rgb(255, 100, 100, 0.7);
+        double startX = src[0] * 60 + (src[0] > dest[0] ? 25 : (isLadder ? 10 : 40));
+        double startY = src[1] * 60 + (src[1] > dest[1] ? 10 : (src[1] == dest[1] ? 25 : 40));
+        double endX = dest[0] * 60 + (src[0] > dest[0] ? 25 : (isLadder ? 40 : 10));
+        double endY = dest[1] * 60 + (src[1] > dest[1] ? 40 : (dest[1] == src[1] ? 25 : 10));
+        double width = 10;
+        double angle = Math.atan2(endY - startY, endX - startX);
+        double halfWidth = width / 2;
+        double[] xPoints = new double[4];
+        double[] yPoints = new double[4];
+        xPoints[0] = startX - halfWidth * Math.sin(angle); // 左上角
+        yPoints[0] = startY + halfWidth * Math.cos(angle);
+        xPoints[1] = startX + halfWidth * Math.sin(angle); // 右上角
+        yPoints[1] = startY - halfWidth * Math.cos(angle);
+        xPoints[2] = endX + halfWidth * Math.sin(angle);   // 右下角
+        yPoints[2] = endY - halfWidth * Math.cos(angle);
+        xPoints[3] = endX - halfWidth * Math.sin(angle);   // 左下角
+        yPoints[3] = endY + halfWidth * Math.cos(angle);
+        gc.setFill(color);
+        gc.fillPolygon(yPoints, xPoints, 4);
+        pane.getChildren().add(canvas);
     }
 
     private String toHexString(Color color) {
@@ -143,7 +172,7 @@ public class Controller {
 
     // 生成一个点数
     @FXML
-    public void handleRoll1(ActionEvent actionEvent) {
+    public void handleRoll1() {
         Random r = new Random(); // 可在此添加道具
         int num = r.nextInt(6) + 1;
 //        int num = 2; // 贝利亚测试连续跳跃
@@ -164,7 +193,7 @@ public class Controller {
 
     // 单机时生成另一个点数
     @FXML
-    public void handleRoll2(ActionEvent actionEvent) {
+    public void handleRoll2() {
         Random r = new Random();
         int num = r.nextInt(6) + 1;
         System.out.println(opponent + "点数为：" + num);
@@ -203,7 +232,7 @@ public class Controller {
             int finalOldPos = oldPos;
             int finalNewPos = newPos;
             System.out.println("Player " + current + " get effect1 " + effect + " and move to " + newPos);
-            scheduler.schedule(() -> movePiece(circle, label, finalOldPos, finalNewPos, isP1), time* 800L, TimeUnit.MILLISECONDS);
+            scheduler.schedule(() -> movePiece(circle, label, finalOldPos, finalNewPos, isP1), time * 800L, TimeUnit.MILLISECONDS);
             time++;
             effect = board[(newPos - 1) / 10][(newPos - 1) % 10];
         }
@@ -265,5 +294,7 @@ public class Controller {
         out.println("game:load");
     }
 
-    public void handleSave() { out.println("game:save"); }
+    public void handleSave() {
+        out.println("game:save");
+    }
 }

@@ -9,6 +9,9 @@ import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
+import javafx.scene.media.Media;
+import javafx.scene.media.MediaPlayer;
+import javafx.scene.media.MediaView;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
@@ -24,6 +27,9 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.*;
 
+import static org.example.demo.Util.createLobbyButton;
+import static org.example.demo.Util.createStyledButton;
+
 
 public class Application extends javafx.application.Application {
     static Label connLabel;
@@ -38,7 +44,7 @@ public class Application extends javafx.application.Application {
     private final ListView<String> historyRecordList = new ListView<>();
     private final List<Alert> alerts = new ArrayList<>();
     boolean openRecord = false;
-    boolean  isGuest = false;
+    boolean isGuest = false;
     Controller controller;
 
     public static void main(String[] args) {
@@ -49,7 +55,7 @@ public class Application extends javafx.application.Application {
         int[][] matrix = new int[10][10];
         Random r = new Random();
         Set<String> uniquePoints = new HashSet<>();
-        int num = r.nextInt(10, 17);
+        int num = r.nextInt(8, 12);
         int[] count = new int[]{0, 0};
         while (uniquePoints.size() < num) {
             int x = r.nextInt(10);
@@ -150,16 +156,10 @@ public class Application extends javafx.application.Application {
         connLabel.setLayoutY(h / 2 - 105);
         Image backgroundImage = new Image("file:src/main/resources/org/example/demo/background.png");
         BackgroundImage background = new BackgroundImage(backgroundImage, BackgroundRepeat.NO_REPEAT, BackgroundRepeat.NO_REPEAT, BackgroundPosition.CENTER, new BackgroundSize(BackgroundSize.AUTO, BackgroundSize.AUTO, false, false, true, true));
-        Button exitButton = new Button("退出游戏");
-        exitButton.setLayoutX(w - 75);
-        exitButton.setLayoutY(h - 30);
-        exitButton.setOnAction(_ -> {
-            stage.close();
-            System.exit(0);
-        });
+        Button exitButton = createStyledButton(pane, w - 110, h - 50, 100, "退出游戏");
+        exitButton.setOnAction(_ -> System.exit(0));
         pane.setBackground(new Background(background));
         pane.getChildren().add(connLabel);
-        pane.getChildren().add(exitButton);
         return pane;
     }
 
@@ -168,50 +168,47 @@ public class Application extends javafx.application.Application {
         Label userLabel = new Label("用户名:");
         userLabel.setFont(Font.font("楷体", FontWeight.BOLD, 18));
         userLabel.setTextFill(Color.BLACK);
-        userLabel.setLayoutX(w / 2 - 160);
-        userLabel.setLayoutY(h / 2 - 60);
+        userLabel.setLayoutX(w / 2 - 130);
+        userLabel.setLayoutY(h / 2 - 80);
 
         TextField userTextField = new TextField();
-        userTextField.setLayoutX(w / 2 - 50);
-        userTextField.setLayoutY(h / 2 - 60);
+        userTextField.setLayoutX(w / 2 - 40);
+        userTextField.setLayoutY(h / 2 - 80);
 
         Label pwLabel = new Label("密码:");
         pwLabel.setFont(Font.font("楷体", FontWeight.BOLD, 18));
         pwLabel.setTextFill(Color.BLACK);
-        pwLabel.setLayoutX(w / 2 - 160);
-        pwLabel.setLayoutY(h / 2);
+        pwLabel.setLayoutX(w / 2 - 130);
+        pwLabel.setLayoutY(h / 2 - 20);
 
         PasswordField pwBox = new PasswordField();
-        pwBox.setLayoutX(w / 2 - 50);
-        pwBox.setLayoutY(h / 2);
+        pwBox.setLayoutX(w / 2 - 40);
+        pwBox.setLayoutY(h / 2 - 20);
 
-        Image backgroundImage = new Image("file:src/main/resources/org/example/demo/background.png");
-        BackgroundImage background = new BackgroundImage(backgroundImage, BackgroundRepeat.NO_REPEAT, BackgroundRepeat.NO_REPEAT, BackgroundPosition.CENTER, new BackgroundSize(BackgroundSize.AUTO, BackgroundSize.AUTO, false, false, true, true));
-        Button registerButton = new Button("注册");
-        registerButton.setLayoutX(w / 2 - 70);
-        registerButton.setLayoutY(h / 2 + 40);
-        Button loginButton = new Button("登录");
-        loginButton.setLayoutX(w / 2 + 30);
-        loginButton.setLayoutY(h / 2 + 40);
-        Button guestLoginButton = new Button("游客模式");
-        guestLoginButton.setLayoutX(w / 2 + 130);
-        guestLoginButton.setLayoutY(h / 2 + 40);
-        Button exitButton = new Button("退出游戏");
-        exitButton.setLayoutX(w - 75);
-        exitButton.setLayoutY(h - 30);
+        String videoPath = getClass().getResource("/org/example/demo/background.mp4").toExternalForm();
+        Media media = new Media(videoPath);
+//        Media media = new Media("file:src/main/resources/org/example/demo/background.mp4");
+        MediaPlayer mediaPlayer = new MediaPlayer(media);
+        MediaView mediaView = new MediaView(mediaPlayer);
+        mediaView.setFitWidth(w);
+        mediaView.setFitHeight(h);
+        mediaView.setPreserveRatio(false);
+        pane.getChildren().add(mediaView);
+        mediaPlayer.setCycleCount(MediaPlayer.INDEFINITE); // 循环播放
+        mediaPlayer.play();
+
+        Button registerButton = createStyledButton(pane, w / 2 - 70, h / 2 + 40, 70, "注册");
+        Button loginButton = createStyledButton(pane, w / 2 + 30, h / 2 + 40, 70, "登录");
+        Button guestButton = createStyledButton(pane, w / 2 - 70, h / 2 + 90, 170, "游客模式");
+        Button exitButton = createStyledButton(pane, w - 110, h - 50, 100, "退出游戏");
         registerButton.setOnAction(_ -> handleLogin(stage, "register", userTextField.getText(), pwBox.getText()));
         loginButton.setOnAction(_ -> handleLogin(stage, "login", userTextField.getText(), pwBox.getText()));
-        guestLoginButton.setOnAction(_ -> handleLogin(stage, "guest", userTextField.getText(), pwBox.getText()));
+        guestButton.setOnAction(_ -> handleLogin(stage, "guest", userTextField.getText(), pwBox.getText()));
         exitButton.setOnAction(_ -> handleLogin(stage, "exit", userTextField.getText(), pwBox.getText()));
-        pane.setBackground(new Background(background));
         pane.getChildren().add(userLabel);
         pane.getChildren().add(userTextField);
         pane.getChildren().add(pwLabel);
         pane.getChildren().add(pwBox);
-        pane.getChildren().add(registerButton);
-        pane.getChildren().add(loginButton);
-        pane.getChildren().add(guestLoginButton);
-        pane.getChildren().add(exitButton);
         return pane;
     }
 
@@ -220,8 +217,7 @@ public class Application extends javafx.application.Application {
         isGuest = false;
         if ("exit".equals(choice)) {
             exit(stage);
-        }
-        else if ("guest".equals(choice)) {
+        } else if ("guest".equals(choice)) {
             out.println("guest");
             String response = null;
             try {
@@ -233,29 +229,32 @@ public class Application extends javafx.application.Application {
             if ("guest accepted".equals(response)) {
                 isGuest = true;
                 name = "guest";
-                VBox lobbyRoot = new VBox(10);
-                lobbyThread = new Thread(() -> handleLobby(stage, lobbyRoot));
-                lobbyThread.start();
                 int[][] board = setupBoard();
                 handleGame(stage, name + "2", name, 1, 1, board, "单机模式");
                 out.println("invite:" + getStringBoard(board));
             }
         } else {
-            out.println(choice + ":" + username + ":" + hashPassword(password));
-            String response = null;
-            try {
-                response = in.readLine();
-            } catch (IOException e) {
-                System.out.println(e.getMessage());
-            }
-            System.out.println("Server1: " + response);
-            if ("login successfully".equals(response)) {
-                System.out.println("laoding lobby pane");
-                name = username;
-                lobbyPane(stage);
+            if (username.isEmpty() || "guest".equals(username) || password.isEmpty()) {
+                Alert alert = new Alert(Alert.AlertType.ERROR, "用户名或密码不合法！");
+                alert.setTitle("错误");
+                alert.setHeaderText(null);
+                alert.showAndWait();
+            } else {
+                out.println(choice + ":" + username + ":" + hashPassword(password));
+                String response = null;
+                try {
+                    response = in.readLine();
+                } catch (IOException e) {
+                    System.out.println(e.getMessage());
+                }
+                System.out.println("Server1: " + response);
+                if ("login successfully".equals(response)) {
+                    System.out.println("loading lobby pane");
+                    name = username;
+                    lobbyPane(stage);
+                }
             }
         }
-
     }
 
     private void exit(Stage stage) {
@@ -274,12 +273,26 @@ public class Application extends javafx.application.Application {
     }
 
     private void lobbyPane(Stage stage) {
+        System.out.println("加载游戏大厅");
         VBox lobbyRoot = new VBox(10);  // 设置 VBox 间距为 10
         lobbyRoot.setPadding(new Insets(10)); // 设置 VBox 的内边距
-        System.out.println("加载游戏大厅");
-        lobbyThread = new Thread(() -> handleLobby(stage, lobbyRoot));
+        Image backgroundImage = new Image(getClass().getResource("/org/example/demo/lobby.jpg").toExternalForm()); // 替换为你的图片路径
+        BackgroundImage background = new BackgroundImage(backgroundImage, BackgroundRepeat.NO_REPEAT, BackgroundRepeat.NO_REPEAT, null, new BackgroundSize(BackgroundSize.AUTO, BackgroundSize.AUTO, false, false, true, true));
+        lobbyRoot.setBackground(new Background(background));
+
+        VBox listBox = new VBox(10);
+        HBox buttonBox = new HBox(20);
+        buttonBox.setAlignment(Pos.BOTTOM_CENTER);
+        buttonBox.setPadding(new Insets(10));
+        createLobbyButton(buttonBox, 120, "开始游戏").setOnAction(_ -> selectMode(stage));
+        createLobbyButton(buttonBox, 120, "查看榜单").setOnAction(_ -> checkoutLeaderboard());
+        createLobbyButton(buttonBox, 120, "退出登录").setOnAction(_ -> out.println("logout:" + name));
+        lobbyRoot.getChildren().add(listBox);
+        lobbyRoot.getChildren().add(buttonBox);
+
+        lobbyThread = new Thread(() -> handleLobby(stage, listBox));
         lobbyThread.start();
-        lobbyScene = new Scene(lobbyRoot, 440, 460);
+        lobbyScene = new Scene(lobbyRoot, 500, 500);
         Platform.runLater(() -> {
             stage.setTitle("游戏大厅");
             stage.setScene(lobbyScene);
@@ -287,7 +300,7 @@ public class Application extends javafx.application.Application {
         });
     }
 
-    private void handleLobby(Stage stage, VBox lobbyRoot) {
+    private void handleLobby(Stage stage, VBox listBox) {
         String response;
         while (name != null) {
             try {
@@ -311,11 +324,9 @@ public class Application extends javafx.application.Application {
                             return Boolean.compare(p1.endsWith("F"), p2.endsWith("F"));
                         });
                         Platform.runLater(() -> {
-                            List<HBox> HBoxes = new ArrayList<>();
+                            listBox.getChildren().clear();
                             for (String player : players) {
-                                HBox box = new HBox(12); // 设置 HBox 间距为 12
-                                box.setAlignment(Pos.CENTER_LEFT); // 左对齐
-                                box.setPadding(new Insets(6)); // 设置 HBox 的内边距
+                                HBox box = new HBox(12);
                                 String[] parts = player.split(",");
                                 Label nameLabel = new Label(parts[0] + switch (parts[1]) {
                                     case "O" -> " （在线）";
@@ -323,34 +334,24 @@ public class Application extends javafx.application.Application {
                                     case "G" -> " （游戏中）";
                                     default -> " （离线）";
                                 });
-                                box.getChildren().add(nameLabel);
                                 if (name.equals(parts[0])) {
-                                    box.setStyle("-fx-background-color: #ADD8E6;");
+                                    box.setStyle("-fx-background-color: rgba(144, 144, 255, 0.8);");
                                 } else if ("F".equals(parts[1])) {
-                                    box.setStyle("-fx-background-color: #D3D3D3;");
+                                    box.setStyle("-fx-background-color: rgba(211, 211, 211, 0.8);");
                                 } else {
-                                    box.setStyle("-fx-background-color: #90EE90;");
+                                    box.setStyle("-fx-background-color: rgba(144, 255, 144, 0.8);");
                                     if ("O".equals(parts[1])) { // 只能邀请在线玩家打匹配
                                         Button butt = new Button("邀请游戏");
                                         butt.setOnAction(_ -> out.println("invite:随机匹配:" + parts[0]));
                                         box.getChildren().add(butt);
                                     }
                                 }
+                                box.getChildren().add(nameLabel);
+                                box.setAlignment(Pos.CENTER_LEFT);
+                                box.setPadding(new Insets(6));
                                 box.setOnMouseClicked(e -> handleRecord(stage, e, parts[0]));
-                                HBoxes.add(box);
+                                listBox.getChildren().add(box);
                             }
-                            HBox buttonBox = new HBox(20);
-                            buttonBox.setAlignment(Pos.CENTER);
-                            buttonBox.setPadding(new Insets(10));
-                            Button modeButt = new Button("开始游戏");
-                            Button rankButt = new Button("查看榜单");
-                            Button backButt = new Button("退出登录");
-                            modeButt.setOnAction(_ -> selectMode(stage));
-                            rankButt.setOnAction(_ -> checkoutLeaderboard());
-                            backButt.setOnAction(_ -> out.println("logout:" + name));
-                            buttonBox.getChildren().addAll(modeButt, rankButt, backButt);
-                            lobbyRoot.getChildren().setAll(HBoxes);
-                            lobbyRoot.getChildren().add(buttonBox);
                         });
                     } else if (response.startsWith("record:")) {
                         String[] record = response.substring(7).split(";");
@@ -447,11 +448,12 @@ public class Application extends javafx.application.Application {
                             }
                             case "load" -> {
                                 Platform.runLater(() -> {
-                                    if (isGuest){
+                                    if (isGuest) {
                                         Alert alt;
                                         alt = createAlert("系统通知", "请登录游戏", "保存功能未解锁");
                                         alt.showAndWait();
-                                    } else handleGame(stage, name + "2", parts[2], Integer.parseInt(parts[3]), Integer.parseInt(parts[4]), parseBoard(parts[5]), "单机模式");
+                                    } else
+                                        handleGame(stage, name + "2", parts[2], Integer.parseInt(parts[3]), Integer.parseInt(parts[4]), parseBoard(parts[5]), "单机模式");
                                 });
                             }
                             case "save" -> {
@@ -500,9 +502,9 @@ public class Application extends javafx.application.Application {
         if (e.getClickCount() == 2 && !openRecord) {
             System.out.println("查看玩家" + player + "历史战绩");
             out.println("record:" + player);
-            VBox recordRoot = new VBox();
+            HBox recordRoot = new HBox();
             recordRoot.getChildren().add(historyRecordList);
-            Button backButton = new Button("返回");
+            Button backButton = createLobbyButton(recordRoot, 100, "返回");
             backButton.setAlignment(Pos.CENTER);
             backButton.setOnAction(_ -> Platform.runLater(() -> {
                 stage.setScene(lobbyScene);
@@ -510,8 +512,7 @@ public class Application extends javafx.application.Application {
                 openRecord = false;
             }));
             openRecord = true;
-            recordRoot.getChildren().add(backButton);
-            recordScene = new Scene(recordRoot, 440, 460);
+            recordScene = new Scene(recordRoot, 500, 500);
             stage.setTitle("玩家" + player + "历史战绩");
             stage.setScene(recordScene);
             stage.show();

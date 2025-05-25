@@ -1,15 +1,19 @@
 /* styles.css */
 .button {
-    -fx-background-color: #ff7f50; /* 按钮默认颜色 */
-    -fx-text-fill: white; /* 文字颜色 */
+    -fx-scale-x: 0.9524;
+    -fx-scale-y: 0.9524;
+    -fx-background-color: rgba(255, 127, 80, 0.6); /* 按钮默认颜色，包含透明度 */
+    -fx-text-fill: rgba(255, 255, 255, 1); /* 文字颜色，保持不透明 */
     -fx-padding: 15px; /* 按钮内边距 */
     -fx-background-radius: 10px; /* 按钮圆角 */
 }
 
 .button:hover {
-    -fx-background-color: #ff6347; /* 鼠标悬停时的颜色 */
+    -fx-scale-x: 1.05; /* 悬停时放大 */
+    -fx-scale-y: 1.05;
+    -fx-background-color: rgba(255, 99, 71, 0.8); /* 鼠标悬停时的颜色，包含透明度 */
 }
 
 .button:pressed {
-    -fx-background-color: #ff4500; /* 按钮被按下时的颜色 */
+    -fx-background-color: rgba(255, 69, 0, 0.9); /* 按钮被按下时的颜色，包含透明度 */
 }
