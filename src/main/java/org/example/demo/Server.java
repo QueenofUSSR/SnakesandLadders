@@ -232,7 +232,7 @@ public class Server {
     }
 
     //存档保存 根据Hashy生成规则
-    private static void saveGame(String name, Game g){
+    protected static void saveGame(String name, Game g){
         Path filePath = Paths.get("src/main/resources/org/example/demo/savedGame/" + name + ".txt");
         Path HashPath = Paths.get("src/main/resources/org/example/demo/saveList.txt");
         Path encryptedDataPath = Paths.get("src/main/resources/org/example/demo/savedGame/" + name + "_bak.txt");
@@ -307,15 +307,23 @@ public class Server {
             return name + "  《" + res + "》  " + oppo + "   " + "   " + String.format("%d分%d秒", diff / 60, diff % 60) + "   " + game.start;
         }
 
-
         @Override
         public void run() {
             try {
                 in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
                 out = new PrintWriter(clientSocket.getOutputStream(), true);
                 String message;
+                long saveStartTime = System.currentTimeMillis();
+
                 boolean isGuest = false;
                 while ((message = in.readLine()) != null) {
+                    //每30s自动保存一次
+                    if(System.currentTimeMillis()-saveStartTime>=30*1000 && name !=null){
+                        saveGame(name,games.get(name));
+                        saveStartTime = System.currentTimeMillis();
+                        System.out.println("AutoSave Complete.");
+                    }
+
                     System.out.println("Client" + clientSocket.getInetAddress() + "/" + name + ": " + message);
                     if (isGuest) {
                         if (message.contains(":")) {
