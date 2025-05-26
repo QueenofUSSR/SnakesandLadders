@@ -279,18 +279,27 @@ public class Application extends javafx.application.Application {
             BackgroundImage background = new BackgroundImage(backgroundImage, BackgroundRepeat.NO_REPEAT, BackgroundRepeat.NO_REPEAT, null, new BackgroundSize(BackgroundSize.AUTO, BackgroundSize.AUTO, false, false, true, true));
             lobbyRoot.setBackground(new Background(background));
 
-        VBox listBox = new VBox(10);
-        HBox buttonBox = new HBox(20);
-        buttonBox.setAlignment(Pos.BOTTOM_CENTER);
-        buttonBox.setPadding(new Insets(10));
-        createLobbyButton(buttonBox, 120, "开始游戏").setOnAction(_ -> {ButtonAudio.stop(); ButtonAudio.play();
-                                                                                            selectMode(stage);});
-        createLobbyButton(buttonBox, 120, "查看榜单").setOnAction(_ -> {ButtonAudio.stop(); ButtonAudio.play();
-                                                                                            checkoutLeaderboard();});
-        createLobbyButton(buttonBox, 120, "退出登录").setOnAction(_ -> {ButtonAudio.stop(); ButtonAudio.play();
-                                                                                            out.println("logout:" + name);});
-        lobbyRoot.getChildren().add(listBox);
-        lobbyRoot.getChildren().add(buttonBox);
+            VBox listBox = new VBox(10);
+            HBox buttonBox = new HBox(20);
+            buttonBox.setAlignment(Pos.BOTTOM_CENTER);
+            buttonBox.setPadding(new Insets(10));
+            createLobbyButton(buttonBox, 120, "查看榜单").setOnAction(_ -> {
+                ButtonAudio.stop();
+                ButtonAudio.play();
+                checkoutLeaderboard();
+            });
+            createLobbyButton(buttonBox, 120, "开始游戏").setOnAction(_ -> {
+                ButtonAudio.stop();
+                ButtonAudio.play();
+                selectMode(stage);
+            });
+            createLobbyButton(buttonBox, 120, "退出登录").setOnAction(_ -> {
+                ButtonAudio.stop();
+                ButtonAudio.play();
+                out.println("logout:" + name);
+            });
+            lobbyRoot.getChildren().add(listBox);
+            lobbyRoot.getChildren().add(buttonBox);
 
             lobbyThread = new Thread(() -> handleLobby(stage, listBox));
             lobbyThread.start();
@@ -545,7 +554,8 @@ public class Application extends javafx.application.Application {
         dialog.setContentText("请选择游戏模式：");
         Optional<String> result = dialog.showAndWait();
         result.ifPresent(choice -> {
-            ButtonAudio.stop(); ButtonAudio.play();
+            ButtonAudio.stop();
+            ButtonAudio.play();
 
             System.out.println("游戏模式: " + choice);
             if (choice.equals("单机模式")) {
