@@ -48,7 +48,7 @@ public class Application extends javafx.application.Application {
     private Controller controller;
     private MediaPlayer backgroundPlayer;
 
-    private static final Media ButtonEffect = new Media(Controller.class.getResource("/org/example/demo/Audio/ButtonPressed.mp3").toString());
+    private static final Media ButtonEffect = new Media(Controller.class.getResource("/org/example/demo/audio/ButtonPressed.mp3").toString());
     private static final MediaPlayer ButtonAudio = new MediaPlayer(ButtonEffect);
 
     public static void main(String[] args) {
@@ -61,7 +61,7 @@ public class Application extends javafx.application.Application {
         Set<String> uniquePoints = new HashSet<>();
         int num = r.nextInt(8, 12);
         int[] count = new int[]{0, 0};
-        while (uniquePoints.size() < num) {
+        /*while (uniquePoints.size() < num) {
             int x = r.nextInt(10);
             int y = r.nextInt(10);
             if (!uniquePoints.contains(x + "," + y) && !(x == 0 && y == 0) && !(x == 9 && y == 9)) {
@@ -75,7 +75,22 @@ public class Application extends javafx.application.Application {
                     count[1]++;
                 }
             }
+        }*/
+        for (int i = 0; i < matrix.length; i++) {
+            for (int j = 0; j < matrix[i].length; j++) {
+                if (r.nextInt(20) > 17) {
+                    int pos = i * 10 + j ;
+                    matrix[i][j] = r.nextInt(-pos, 99 - pos);
+                    if (matrix[i][j] > 0) {
+                        count[0]++;
+                    } else if (matrix[i][j] < 0) {
+                        count[1]++;
+                    }
+                }
+            }
         }
+        matrix[0][0] = 0;
+        matrix[9][9] = 0;
         System.out.println("Create a board:");
         for (int[] ints : matrix) {
             for (int anInt : ints) {
@@ -275,7 +290,7 @@ public class Application extends javafx.application.Application {
             backgroundPlayer.stop();
             VBox lobbyRoot = new VBox(10);
             lobbyRoot.setPadding(new Insets(10));
-            Image backgroundImage = new Image(getClass().getResource("/org/example/demo/lobby.jpg").toExternalForm()); // 替换为你的图片路径
+            Image backgroundImage = new Image(getClass().getResource("/org/example/demo/image/lobby.jpg").toExternalForm()); // 替换为你的图片路径
             BackgroundImage background = new BackgroundImage(backgroundImage, BackgroundRepeat.NO_REPEAT, BackgroundRepeat.NO_REPEAT, null, new BackgroundSize(BackgroundSize.AUTO, BackgroundSize.AUTO, false, false, true, true));
             lobbyRoot.setBackground(new Background(background));
 
