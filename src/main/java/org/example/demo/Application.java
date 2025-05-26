@@ -237,6 +237,9 @@ public class Application extends javafx.application.Application {
             if ("guest accepted".equals(response)) {
                 isGuest = true;
                 name = "guest";
+                VBox lobbyRoot = new VBox(10);
+                lobbyThread = new Thread(() -> handleLobby(stage, lobbyRoot));
+                lobbyThread.start();
                 int[][] board = setupBoard();
                 handleGame(stage, name + "2", name, 1, 1, board, "单机模式");
                 out.println("invite:" + getStringBoard(board));
