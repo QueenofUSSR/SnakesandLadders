@@ -511,6 +511,50 @@ public class Application extends javafx.application.Application {
                                 out.println("game:over:escape:" + parts[1]);
                             }
                         });
+                    } else if (response.startsWith("STAIRWAY_TO_HEAVEN")) {
+                        String[] parts = response.split(":");
+                        if (parts.length==1) {
+                            Platform.runLater(() -> {
+                                Alert alt = createAlert("对局通知", "对方使用了技能“登神”！", "Stairway to Heaven! ");
+                                alt.showAndWait();
+                            });
+                        } else {
+                            int cnt = Integer.parseInt(parts[1]);
+                            if (cnt<0) {
+                                Platform.runLater(() -> {
+                                    Alert alt = createAlert("对局通知", "“登神”用尽了！", "");
+                                    alt.showAndWait();
+                                });
+                            } else {
+                                Platform.runLater(() -> {
+                                    Alert alt = createAlert("对局通知", "你使用了“登神”！", "4回合内你的骰子变为20面！");
+                                    alt.showAndWait();
+                                });
+                                controller.stairway = 4;
+                            }
+                        }
+                    } else if (response.startsWith("DEAD_LOCK")) {
+                        String[] parts = response.split(":");
+                        if (parts.length==1) {
+                            Platform.runLater(() -> {
+                                Alert alt = createAlert("对局通知", "对方使用了技能“死锁”！", "接下来三回合你只能掷出“1”！");
+                                alt.showAndWait();
+                            });
+                            controller.dead = 3;
+                        } else {
+                            int cnt = Integer.parseInt(parts[1]);
+                            if (cnt<0) {
+                                Platform.runLater(() -> {
+                                    Alert alt = createAlert("对局通知", "“死锁”用尽了！", "");
+                                    alt.showAndWait();
+                                });
+                            } else {
+                                Platform.runLater(() -> {
+                                    Alert alt = createAlert("对局通知", "你使用了“死锁”！", "3回合内对方只能掷出“1”！");
+                                    alt.showAndWait();
+                                });
+                            }
+                        }
                     }
                 }
             } catch (IOException e) {

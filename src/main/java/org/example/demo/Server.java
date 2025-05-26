@@ -501,6 +501,27 @@ public class Server {
                                         }
                                     }
                                 }
+                            } else if ("STAIRWAY_TO_HEAVEN".equals(parts[0])) {
+                                org.example.demo.Server.Game g = games.get(name);
+                                int cnt = g.stairwayStat.get(name);
+                                if (cnt > 0) {
+                                    g.stairwayStat.replace(name, --cnt);
+                                    out.println("STAIRWAY_TO_HEAVEN:"+cnt);
+                                    forward(parts[1], parts[0]);
+                                } else {
+                                    out.println("STAIRWAY_TO_HEAVEN:-1");
+                                }
+
+                            } else if ("DEAD_LOCK".equals(parts[0])) {
+                                org.example.demo.Server.Game g = games.get(name);
+                                int cnt = g.deadLockStat.get(name);
+                                if (cnt > 0) {
+                                    g.deadLockStat.replace(name, --cnt);
+                                    out.println("DEAD_LOCK:"+cnt);
+                                    forward(parts[1], parts[0]);
+                                } else {
+                                    out.println("DEAD_LOCK:-1");
+                                }
                             }
                         }
                     } else if ("exit".equals(message)) {
@@ -562,6 +583,10 @@ public class Server {
         String mode;
         String start;
         String time;
+        HashMap<String, Integer> stairwayStat = new HashMap<>();
+        HashMap<String, Integer> deadLockStat = new HashMap<>();
+
+
 
         public Game(String u1, String u2, String curr, String p1, String p2, String board, String mode, String start, String time) {
             this.u1 = u1;
@@ -573,6 +598,10 @@ public class Server {
             this.mode = mode;
             this.start = start;
             this.time = time;
+            this.stairwayStat.put(u1, 1);
+            this.stairwayStat.put(u2, 1);
+            this.deadLockStat.put(u1, 2);
+            this.deadLockStat.put(u2, 2);
         }
     }
 }

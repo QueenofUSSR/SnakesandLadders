@@ -39,6 +39,8 @@ public class Controller {
     public GridPane gridBoard; // 棋盘面板
     public Button rollButt1;
     public Button rollButt2;
+    public Button propStairway;
+    public Button propDeadLock;
     public Button loadBtn;
     public Button saveBtn;
     @FXML
@@ -57,6 +59,12 @@ public class Controller {
     private String opponent;
     private String current;
     private int[][] board;
+
+    private int STAIRWAY_TO_HEAVEN = 1;
+    private int DEAD_LOCK = 2;
+
+    public int dead = 0;
+    public int stairway = 0;
 
     @FXML
     private Label diceLabel;
@@ -125,13 +133,18 @@ public class Controller {
         addPlayerCircle(pos2[0], pos2[1], false);
         rollButt1.setDisable(opponent.equals(current));
         rollButt2.setDisable(name.equals(current));
+        propStairway.setVisible(false);
+        propDeadLock.setVisible(false);
         if (mode != 0) { // 匹配或排位
+            propStairway.setVisible(true);
+            propDeadLock.setVisible(true);
             userLabel1.setText("玩家位置");
             userLabel2.setText("对手位置");
             rollButt1.setText("投掷骰子");
             rollButt2.setText("查看敌情");
             rollButt2.setOnAction(_ -> handleCheck());
             loadBtn.setVisible(false);
+            saveBtn.setVisible(false);
         }
     }
 
@@ -195,8 +208,18 @@ public class Controller {
         });
 
         Random r = new Random();
-        int num = r.nextInt(6) + 1;
+        int numTmp = r.nextInt(6) + 1;
 
+        if (dead==0) {
+            if (stairway!=0) {
+                numTmp = r.nextInt(20) + 1;
+                stairway--;
+            }
+        } else {
+            dead--;
+            numTmp = 1;
+        }
+        int num = numTmp;
         playDiceRoll(diceGIF,num,diceLabel,name,()->{
             System.out.println("自己点数为：" + num);
             int oldPos = Integer.parseInt(posLabel1.getText());
@@ -248,7 +271,7 @@ public class Controller {
                     "/org/example/demo/GIF/0"+ i + ".gif")).toExternalForm()));
         }
         frames.add(new Image(Objects.requireNonNull(Controller.class.getResource(
-                "/org/example/demo/GIF/"+ diceNum + ".gif")).toExternalForm()));
+                "/org/example/demo/GIF/"+ (diceNum>6?20:diceNum) + ".gif")).toExternalForm()));
 
         Timeline timeline = new Timeline();
 
@@ -266,7 +289,7 @@ public class Controller {
                 new KeyFrame(Duration.millis(50 * frames.size()), e -> {
                     diceLabel.setText(player);
                     Image finalFrame = new Image(Objects.requireNonNull(
-                            Controller.class.getResource("/org/example/demo/GIF/" + diceNum + ".gif")
+                            Controller.class.getResource("/org/example/demo/GIF/" + (diceNum>6?20:diceNum) + ".gif")
                     ).toExternalForm());
                     imageView.setImage(finalFrame);
                 })
@@ -367,4 +390,17 @@ public class Controller {
     }
 
     public void handleSave() { out.println("game:save"); }
+
+    public void handleStairway() {
+//        STAIRWAY_TO_HEAVEN--;
+//        stairway = 4;
+        out.println("STAIRWAY_TO_HEAVEN:" + opponent);
+//        propStairway.setDisable(STAIRWAY_TO_HEAVEN==0);
+    }
+    public void handleDeadLock() {
+//        DEAD_LOCK--;
+//        dead = 3;
+        out.println("DEAD_LOCK:" + opponent);
+//        propDeadLock.setDisable(DEAD_LOCK==0);
+    }
 }

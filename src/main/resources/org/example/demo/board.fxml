@@ -12,6 +12,8 @@
         <Label fx:id="posLabel1" text="0" style="-fx-font-size: 16px; -fx-font-weight: bold;"/>
         <Label fx:id="userLabel2" text="玩家2位置: " style="-fx-font-size: 16px;"/>
         <Label fx:id="posLabel2" text="0" style="-fx-font-size: 16px; -fx-font-weight: bold;"/>
+        <Button fx:id="propStairway" text="登神" onAction="#handleStairway" styleClass="button"/>
+        <Button fx:id="propDeadLock" text="死锁" onAction="#handleDeadLock" styleClass="button"/>
     </HBox>
 
     <HBox spacing="10" alignment="CENTER" style="-fx-padding: 10;">
