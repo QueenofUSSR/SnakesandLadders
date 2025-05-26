@@ -5,7 +5,7 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.image.ImageView?>
 <VBox xmlns="http://javafx.com/javafx/22.0.1" xmlns:fx="http://javafx.com/fxml"
-      fx:controller="org.example.demo.Controller" style="-fx-background-color: #f0f8ff;"
+      fx:controller="org.example.demo.Controller" style="-fx-background-color: linear-gradient(to bottom right, #ff6b6b, #4ecdc4);"
       stylesheets="@styles.css">
     <HBox spacing="20" alignment="CENTER" style="-fx-padding: 10;">
         <Label fx:id="userLabel1" text="玩家1位置: " style="-fx-font-size: 16px;"/>
@@ -21,15 +21,14 @@
             <Pane fx:id="gameBoard" VBox.vgrow="ALWAYS" style="-fx-padding: 10; -fx-min-width: 500; -fx-min-height: 500;"/>
         </VBox>
 
-        <VBox spacing="30" alignment="CENTER" style="-fx-padding: 10;">
+        <VBox spacing="20" alignment="CENTER" style="-fx-padding: 10;">
             <Button fx:id="rollButt1" text="投掷骰子1" onAction="#handleRoll1" styleClass="button"/>
             <Button fx:id="rollButt2" text="投掷骰子2" onAction="#handleRoll2" styleClass="button"/>
             <Button text="重新游戏" onAction="#handleReset" styleClass="button"/>
             <Button text="退出本局" onAction="#handleEscape" styleClass="button"/>
             <Button fx:id="saveBtn" text="保存游戏" onAction="#handleSave" styleClass="button"/>
             <Button fx:id="loadBtn" text="读取存档" onAction="#handleLoad" styleClass="button"/>
-
-            <Label fx:id="diceLabel"  alignment="CENTER" prefWidth="40" prefHeight="100" style="-fx-font-size: 16px;" />
+            <Label fx:id="diceLabel"  alignment="CENTER" prefWidth="100" prefHeight="40" style="-fx-font-size: 16px;" />
             <ImageView fx:id="diceGIF"/>
         </VBox>
     </HBox>

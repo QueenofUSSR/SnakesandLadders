@@ -49,9 +49,9 @@ public class Util {
         return button;
     }
 
-    public static Button createLobbyButton(HBox box, double width, String text) {
+    public static Button createLobbyButton(HBox box, double width,double height, String text) {
         Button button = new Button(text);
-        button.setPrefSize(width, 40);
+        button.setPrefSize(width, height);
         String baseStyle = "-fx-background-color: rgba(50, 50, 50, 0.6);" + "-fx-text-fill: white;" + "-fx-font-size: 14px;" + "-fx-background-radius: 5;" + "-fx-border-color: rgba(255,255,255,0.2);" + "-fx-border-radius: 5;";
         String hoverStyle = "-fx-background-color: rgba(60, 30, 30, 0.75);" + "-fx-text-fill: white;" + "-fx-font-size: 14px;" + "-fx-border-color: rgba(255,255,255,0.4);";
         String darkStyle = "-fx-background-color: rgba(60, 30, 30, 0.9);" + "-fx-text-fill: white;" + "-fx-font-size: 14px;" + "-fx-border-color: rgba(255,255,255,0.4);";

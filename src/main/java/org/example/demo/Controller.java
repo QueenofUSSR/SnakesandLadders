@@ -3,6 +3,7 @@ package org.example.demo;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.application.Platform;
+import javafx.beans.binding.Bindings;
 import javafx.fxml.FXML;
 import javafx.geometry.Pos;
 import javafx.scene.canvas.Canvas;
@@ -21,7 +22,6 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.util.Duration;
 
-import java.io.File;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
@@ -71,7 +71,7 @@ public class Controller {
     @FXML
     private ImageView diceGIF;
 
-    private static final Media ButtonEffect = new Media(Objects.requireNonNull(Controller.class.getResource("/org/example/demo/Audio/ButtonPressed.mp3")).toString());
+    private static final Media ButtonEffect = new Media(Objects.requireNonNull(Controller.class.getResource("/org/example/demo/audio/ButtonPressed.mp3")).toString());
     private static final MediaPlayer ButtonAudio = new MediaPlayer(ButtonEffect);
 
     @FXML
@@ -82,6 +82,8 @@ public class Controller {
         this.current = curr;
         this.board = board;
         this.mode = mode;
+        diceLabel.setText(curr);
+        diceGIF.setImage(new Image(Objects.requireNonNull(Controller.class.getResource("/org/example/demo/GIF/1.gif")).toExternalForm()));
         posLabel1.setText(String.valueOf(p1));
         posLabel2.setText(String.valueOf(p2));
         gridBoard = new GridPane();
@@ -101,6 +103,9 @@ public class Controller {
                 Label effectLabel = new Label(String.valueOf(board[i][j]));
                 positionLabel.setTextFill(Color.BLACK);
                 effectLabel.setTextFill(Color.BLACK);
+                positionLabel.setTextFill(Color.BLACK);
+                positionLabel.getStyleClass().add("cell-label");
+                positionLabel.styleProperty().bind(Bindings.format("-fx-font-size: %.2fpx;", cell.widthProperty().divide(3)));
                 Color cellColor;
                 if (board[i][j] > 0) {
                     cellColor = Color.DEEPSKYBLUE;
@@ -121,9 +126,9 @@ public class Controller {
                     };
                 }
                 cell.setStyle("-fx-background-color: " + toHexString(cellColor) + ";");
-                vbox.getChildren().add(positionLabel);
+                vbox.getChildren().add(effectLabel);
                 cell.getChildren().add(vbox);
-                cell.getChildren().add(effectLabel);
+                cell.getChildren().add(positionLabel);
                 gridBoard.add(cell, tansPos[1], tansPos[0]);
             }
         }
@@ -132,6 +137,7 @@ public class Controller {
         addPlayerCircle(pos1[0], pos1[1], true);
         addPlayerCircle(pos2[0], pos2[1], false);
         rollButt1.setDisable(opponent.equals(current));
+        rollButt2.setDisable(mode == 0 && name.equals(current));
         rollButt2.setDisable(name.equals(current));
         propStairway.setVisible(false);
         propDeadLock.setVisible(false);
@@ -189,7 +195,7 @@ public class Controller {
 
     // 添加玩家棋子
     private void addPlayerCircle(int x, int y, boolean isP1) {
-        Color color = isP1 ? Color.BLUE : Color.RED;
+        Color color = isP1 ? new Color(0.15, 0.15, 1, 0.8) : new Color(1, 0.15, 0.15, 0.8);
         int offset = isP1 ? 15 : 35;
         Circle playerCircle = new Circle(10);
         playerCircles[isP1 ? 0 : 1] = playerCircle;
@@ -208,18 +214,8 @@ public class Controller {
         });
 
         Random r = new Random();
-        int numTmp = r.nextInt(6) + 1;
+        int num = r.nextInt(6) + 1;
 
-        if (dead==0) {
-            if (stairway!=0) {
-                numTmp = r.nextInt(20) + 1;
-                stairway--;
-            }
-        } else {
-            dead--;
-            numTmp = 1;
-        }
-        int num = numTmp;
         playDiceRoll(diceGIF,num,diceLabel,name,()->{
             System.out.println("自己点数为：" + num);
             int oldPos = Integer.parseInt(posLabel1.getText());
@@ -247,8 +243,7 @@ public class Controller {
 
         Random r = new Random();
         int num = r.nextInt(6) + 1;
-
-        playDiceRoll(diceGIF,num,diceLabel,opponent,()->{
+        playDiceRoll(diceGIF, num, diceLabel, opponent, () -> {
             System.out.println(opponent + "点数为：" + num);
             int oldPos = Integer.parseInt(posLabel2.getText());
             int newPos = oldPos + num;
@@ -264,11 +259,10 @@ public class Controller {
     }
 
     //骰子动画
-    public static void playDiceRoll(ImageView imageView, int diceNum,Label diceLabel,String player,Runnable onFinished) {
+    public static void playDiceRoll(ImageView imageView, int diceNum, Label diceLabel, String player, Runnable onFinished) {
         List<Image> frames = new ArrayList<>();
         for (int i = 1; i <= 12; i++) {
-            frames.add(new Image(Objects.requireNonNull(Controller.class.getResource(
-                    "/org/example/demo/GIF/0"+ i + ".gif")).toExternalForm()));
+            frames.add(new Image(Objects.requireNonNull(Controller.class.getResource("/org/example/demo/GIF/0" + i + ".gif")).toExternalForm()));
         }
         frames.add(new Image(Objects.requireNonNull(Controller.class.getResource(
                 "/org/example/demo/GIF/"+ (diceNum>6?20:diceNum) + ".gif")).toExternalForm()));
@@ -278,7 +272,7 @@ public class Controller {
         // 播放前12帧动画（每帧 50ms）
         for (int i = 0; i < frames.size(); i++) {
             final int index = i;
-            timeline.getKeyFrames().add(new KeyFrame(Duration.millis(50 * i),event->{
+            timeline.getKeyFrames().add(new KeyFrame(Duration.millis(50 * i), _ -> {
                 diceLabel.setText(player);
                 imageView.setImage(frames.get(index));
             }));
@@ -295,7 +289,7 @@ public class Controller {
                 })
         );
 
-        timeline.setOnFinished(e -> {
+        timeline.setOnFinished(_ -> {
             if (onFinished != null) {
                 onFinished.run();
             }
@@ -315,10 +309,27 @@ public class Controller {
 
     // 连续跳跃
     private int multiMovePiece(Circle circle, Label label, int oldPos, int newPos, boolean isP1) {
+        System.out.println("Player " + (isP1 ? name : opponent) + " move from " + oldPos + " to " + newPos);
         if (newPos > 100) {
             newPos = 200 - newPos;
         }
-        movePiece(circle, label, oldPos, newPos, isP1);
+        int finalNewPos0 = newPos;
+        if (oldPos + 1 == newPos || (oldPos - 1) / 10 == (newPos - 1) / 10) {
+            movePiece(circle, label, oldPos, newPos, isP1);
+        } else if (oldPos % 10 == 0 || oldPos % 10 == 1) {
+            int tempPos = oldPos + 1;
+            movePiece(circle, label, oldPos, tempPos, isP1);
+            scheduler.schedule(() -> movePiece(circle, label, tempPos, finalNewPos0, isP1), 600L, TimeUnit.MILLISECONDS);
+        } else if (newPos % 10 == 0 || newPos % 10 == 1) {
+            int tempPos = oldPos / 10 * 10 + 10;
+            movePiece(circle, label, oldPos, tempPos, isP1);
+            scheduler.schedule(() -> movePiece(circle, label, tempPos, finalNewPos0, isP1), 600L, TimeUnit.MILLISECONDS);
+        } else {
+            int tempPos = oldPos / 10 * 10 + 10;
+            movePiece(circle, label, oldPos, tempPos, isP1);
+            scheduler.schedule(() -> movePiece(circle, label, tempPos, tempPos + 1, isP1), 600L, TimeUnit.MILLISECONDS);
+            scheduler.schedule(() -> movePiece(circle, label, tempPos + 1, finalNewPos0, isP1), 1200L, TimeUnit.MILLISECONDS);
+        }
         int effect = board[(newPos - 1) / 10][(newPos - 1) % 10];
         int time = 1;
         while (effect != 0) {
@@ -346,10 +357,11 @@ public class Controller {
         double endY = newTrans[0] * 60 + offset;
 
         Timeline timeline = new Timeline();
+        double duration = 400 + Math.sqrt((oldTrans[0] - newTrans[0]) * (oldTrans[0] - newTrans[0]) + (oldTrans[1] - newTrans[1]) * (oldTrans[1] - newTrans[1])) * 20;
         int frames = 60;
         for (int i = 0; i <= frames; i++) {
             final int frame = i;
-            KeyFrame keyFrame = new KeyFrame(Duration.millis(frame * 800.0 / frames), _ -> {
+            KeyFrame keyFrame = new KeyFrame(Duration.millis(frame * duration / frames), _ -> {
                 double t = (double) frame / frames;
                 t = t * t * (3 - 2 * t); // 使用缓动公式
                 double currentX = startX + t * (endX - startX);
