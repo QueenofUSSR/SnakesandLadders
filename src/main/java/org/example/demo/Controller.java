@@ -126,7 +126,7 @@ public class Controller {
         addPlayerCircle(pos1[0], pos1[1], true);
         addPlayerCircle(pos2[0], pos2[1], false);
         rollButt1.setDisable(opponent.equals(current));
-        rollButt2.setDisable(name.equals(current));
+        rollButt2.setDisable(mode == 0 && name.equals(current));
         if (mode != 0) { // 匹配或排位
             userLabel1.setText("玩家位置");
             userLabel2.setText("对手位置");
@@ -178,7 +178,7 @@ public class Controller {
 
     // 添加玩家棋子
     private void addPlayerCircle(int x, int y, boolean isP1) {
-        Color color = isP1 ? new Color(0.15, 0.15, 1, 0.9) : new Color(1, 0.15, 0.15, 0.9);
+        Color color = isP1 ? new Color(0.15, 0.15, 1, 0.8) : new Color(1, 0.15, 0.15, 0.8);
         int offset = isP1 ? 15 : 35;
         Circle playerCircle = new Circle(10);
         playerCircles[isP1 ? 0 : 1] = playerCircle;
@@ -284,12 +284,17 @@ public class Controller {
 
     // 连续跳跃
     private int multiMovePiece(Circle circle, Label label, int oldPos, int newPos, boolean isP1) {
+        System.out.println("Player " + (isP1 ? name : opponent) + " move from " + oldPos + " to " + newPos);
         if (newPos > 100) {
             newPos = 200 - newPos;
         }
         int finalNewPos0 = newPos;
-        if (oldPos / 10 == newPos / 10) {
+        if (oldPos + 1 == newPos || (oldPos - 1) / 10 == (newPos - 1) / 10) {
             movePiece(circle, label, oldPos, newPos, isP1);
+        } else if (oldPos % 10 == 0 || oldPos % 10 == 1) {
+            int tempPos = oldPos + 1;
+            movePiece(circle, label, oldPos, tempPos, isP1);
+            scheduler.schedule(() -> movePiece(circle, label, tempPos, finalNewPos0, isP1), 600L, TimeUnit.MILLISECONDS);
         } else if (newPos % 10 == 0 || newPos % 10 == 1) {
             int tempPos = oldPos / 10 * 10 + 10;
             movePiece(circle, label, oldPos, tempPos, isP1);
@@ -298,7 +303,7 @@ public class Controller {
             int tempPos = oldPos / 10 * 10 + 10;
             movePiece(circle, label, oldPos, tempPos, isP1);
             scheduler.schedule(() -> movePiece(circle, label, tempPos, tempPos + 1, isP1), 600L, TimeUnit.MILLISECONDS);
-            scheduler.schedule(() -> movePiece(circle, label, tempPos + 1, finalNewPos0, isP1), 1300L, TimeUnit.MILLISECONDS);
+            scheduler.schedule(() -> movePiece(circle, label, tempPos + 1, finalNewPos0, isP1), 1200L, TimeUnit.MILLISECONDS);
         }
         int effect = board[(newPos - 1) / 10][(newPos - 1) % 10];
         int time = 1;
@@ -327,10 +332,11 @@ public class Controller {
         double endY = newTrans[0] * 60 + offset;
 
         Timeline timeline = new Timeline();
+        double duration = 400 + Math.sqrt((oldTrans[0] - newTrans[0]) * (oldTrans[0] - newTrans[0]) + (oldTrans[1] - newTrans[1]) * (oldTrans[1] - newTrans[1])) * 20;
         int frames = 60;
         for (int i = 0; i <= frames; i++) {
             final int frame = i;
-            KeyFrame keyFrame = new KeyFrame(Duration.millis(frame * 800.0 / frames), _ -> {
+            KeyFrame keyFrame = new KeyFrame(Duration.millis(frame * duration / frames), _ -> {
                 double t = (double) frame / frames;
                 t = t * t * (3 - 2 * t); // 使用缓动公式
                 double currentX = startX + t * (endX - startX);

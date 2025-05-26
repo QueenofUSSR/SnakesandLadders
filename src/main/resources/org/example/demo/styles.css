@@ -1,22 +1,8 @@
 /* styles.css */
 .root-vbox {
-    /* 主渐变层 */
-    -fx-background-color:
-            linear-gradient(to bottom right, #12c2e9, #c471ed, #f64f59),
-
-                /* 条纹层 */
-            repeating-linear-gradient(45deg,
-            rgba(255,255,255,0.1) 0 10px,
-            rgba(0,0,0,0.1) 10px 20px
-            );
-
-    /* 混合模式 */
+    -fx-background-color: linear-gradient(to bottom right, #12c2e9, #c471ed, #f64f59), repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.1) 0 10px, rgba(0, 0, 0, 0.1) 10px 20px);
     -fx-background-blend-mode: overlay;
-
-    /* 投影效果 */
-    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.2), 0, 0, 20, 0);
-
-    /* 增强视觉效果 */
+    -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.2), 0, 0, 20, 0);
     -fx-background-insets: 0, 10;
     -fx-background-radius: 15;
     -fx-padding: 20;
