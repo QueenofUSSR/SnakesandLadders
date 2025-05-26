@@ -16,6 +16,7 @@ import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
+import javafx.util.Duration;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -27,8 +28,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.*;
 
-import static org.example.demo.Util.createLobbyButton;
-import static org.example.demo.Util.createStyledButton;
+import static org.example.demo.Util.*;
 
 
 public class Application extends javafx.application.Application {
@@ -43,9 +43,10 @@ public class Application extends javafx.application.Application {
     static Scene recordScene;
     private final ListView<String> historyRecordList = new ListView<>();
     private final List<Alert> alerts = new ArrayList<>();
-    boolean openRecord = false;
-    boolean isGuest = false;
-    Controller controller;
+    private boolean openRecord = false;
+    private boolean isGuest = false;
+    private Controller controller;
+    private MediaPlayer backgroundPlayer;
 
     public static void main(String[] args) {
         launch(args);
@@ -109,17 +110,18 @@ public class Application extends javafx.application.Application {
     public void start(Stage stage) {
         double w = 800;
         double h = 450;
-        Pane connPane = connectPane(stage, w, h);
-        Scene connScene = new Scene(connPane, w, h);
+        Pane connectPane = connectPane(w, h);
+        loginScene = new Scene(connectPane, w, h);
         Platform.runLater(() -> {
             stage.setTitle("连接服务器");
-            stage.setScene(connScene);
+            stage.setScene(loginScene);
             stage.show();
             stage.setOnCloseRequest(_ -> exit(stage));
         });
         new Thread(() -> {
             int tryNum = 0;
-            while (++tryNum < 10) {
+            while (tryNum < 10) {
+                System.out.println("尝试连接服务器，尝试次数：" + ++tryNum);
                 try {
                     Thread.sleep(2000);
                     socket = new Socket("localhost", 12345);
@@ -133,84 +135,68 @@ public class Application extends javafx.application.Application {
             int finalTryNum = tryNum;
             Platform.runLater(() -> {
                 if (finalTryNum == 10) {
-                    connLabel.setText("   木有骰子了T^T，请稍后再尝试登录。\n\n\n\n\n\n\n\n\n\n\n如需查询服务器重启时间，请访问游戏官网：\nhttps://github.com/solovesonxi/SnakeLadderGame");
+                    connLabel.setText("   木有骰子了T^T，请稍后再尝试登录。\n\n\n\n\n\n\n\n\n\n\n如需查询服务器重启时间，请访问游戏官网：\nhttps://github.com/QueenofUSSR/SnakesandLadders");
                     connLabel.setLayoutX(w / 2 - 180);
                     connLabel.setLayoutY(h / 2 - 100);
                 } else {
-                    Pane loginPane = loginPane(stage, w, h);
-                    loginScene = new Scene(loginPane, w, h);
-                    stage.setTitle("用户登录");
-                    stage.setScene(loginScene);
-                    stage.show();
+                    loginPane(stage, connectPane, w, h);
                 }
             });
         }).start();
     }
 
-    private Pane connectPane(Stage stage, double w, double h) {
+    private Pane connectPane(double w, double h) {
         Pane pane = new Pane();
         connLabel = new Label("死命加载中，请耐心等待喔~\n\n\n\n\n\n\n\n\n\n\n\n        制作人：陈世有，朱炫睿，李皓玥");
-        connLabel.setFont(Font.font("楷体", FontWeight.BOLD, 18));
+        connLabel.setFont(Font.font("楷体", FontWeight.NORMAL, 18));
         connLabel.setTextFill(Color.BLACK);
         connLabel.setLayoutX(w / 2 - 140);
         connLabel.setLayoutY(h / 2 - 105);
-        Image backgroundImage = new Image("file:src/main/resources/org/example/demo/background.png");
-        BackgroundImage background = new BackgroundImage(backgroundImage, BackgroundRepeat.NO_REPEAT, BackgroundRepeat.NO_REPEAT, BackgroundPosition.CENTER, new BackgroundSize(BackgroundSize.AUTO, BackgroundSize.AUTO, false, false, true, true));
-        Button exitButton = createStyledButton(pane, w - 110, h - 50, 100, "退出游戏");
-        exitButton.setOnAction(_ -> System.exit(0));
-        pane.setBackground(new Background(background));
-        pane.getChildren().add(connLabel);
-        return pane;
-    }
-
-    private Pane loginPane(Stage stage, double w, double h) {
-        Pane pane = new Pane();
-        Label userLabel = new Label("用户名:");
-        userLabel.setFont(Font.font("楷体", FontWeight.BOLD, 18));
-        userLabel.setTextFill(Color.BLACK);
-        userLabel.setLayoutX(w / 2 - 130);
-        userLabel.setLayoutY(h / 2 - 80);
-
-        TextField userTextField = new TextField();
-        userTextField.setLayoutX(w / 2 - 40);
-        userTextField.setLayoutY(h / 2 - 80);
-
-        Label pwLabel = new Label("密码:");
-        pwLabel.setFont(Font.font("楷体", FontWeight.BOLD, 18));
-        pwLabel.setTextFill(Color.BLACK);
-        pwLabel.setLayoutX(w / 2 - 130);
-        pwLabel.setLayoutY(h / 2 - 20);
-
-        PasswordField pwBox = new PasswordField();
-        pwBox.setLayoutX(w / 2 - 40);
-        pwBox.setLayoutY(h / 2 - 20);
 
         String videoPath = getClass().getResource("/org/example/demo/background.mp4").toExternalForm();
         Media media = new Media(videoPath);
-//        Media media = new Media("file:src/main/resources/org/example/demo/background.mp4");
-        MediaPlayer mediaPlayer = new MediaPlayer(media);
-        MediaView mediaView = new MediaView(mediaPlayer);
+        backgroundPlayer = new MediaPlayer(media);
+        MediaView mediaView = new MediaView(backgroundPlayer);
+        backgroundPlayer.setCycleCount(MediaPlayer.INDEFINITE);
+        backgroundPlayer.play();
         mediaView.setFitWidth(w);
         mediaView.setFitHeight(h);
         mediaView.setPreserveRatio(false);
         pane.getChildren().add(mediaView);
-        mediaPlayer.setCycleCount(MediaPlayer.INDEFINITE); // 循环播放
-        mediaPlayer.play();
 
-        Button registerButton = createStyledButton(pane, w / 2 - 70, h / 2 + 40, 70, "注册");
-        Button loginButton = createStyledButton(pane, w / 2 + 30, h / 2 + 40, 70, "登录");
-        Button guestButton = createStyledButton(pane, w / 2 - 70, h / 2 + 90, 170, "游客模式");
         Button exitButton = createStyledButton(pane, w - 110, h - 50, 100, "退出游戏");
-        registerButton.setOnAction(_ -> handleLogin(stage, "register", userTextField.getText(), pwBox.getText()));
-        loginButton.setOnAction(_ -> handleLogin(stage, "login", userTextField.getText(), pwBox.getText()));
-        guestButton.setOnAction(_ -> handleLogin(stage, "guest", userTextField.getText(), pwBox.getText()));
-        exitButton.setOnAction(_ -> handleLogin(stage, "exit", userTextField.getText(), pwBox.getText()));
-        pane.getChildren().add(userLabel);
-        pane.getChildren().add(userTextField);
-        pane.getChildren().add(pwLabel);
-        pane.getChildren().add(pwBox);
+        exitButton.setOnAction(_ -> System.exit(0));
+        pane.getChildren().add(connLabel);
         return pane;
     }
+
+    private void loginPane(Stage stage, Pane loginPane, double w, double h) {
+        loginPane.getChildren().remove(connLabel);
+        Label userLabel = new Label("用户名:");
+        userLabel.setFont(Font.font("楷体", FontWeight.NORMAL, 18));
+        userLabel.setTextFill(Color.BLACK);
+        userLabel.setLayoutX(w / 2 - 150);
+        userLabel.setLayoutY(h / 2 - 100);
+        loginPane.getChildren().add(userLabel);
+
+        Label pwLabel = new Label("密码:");
+        pwLabel.setFont(Font.font("楷体", FontWeight.NORMAL, 18));
+        pwLabel.setTextFill(Color.BLACK);
+        pwLabel.setLayoutX(w / 2 - 150);
+        pwLabel.setLayoutY(h / 2 - 40);
+        loginPane.getChildren().add(pwLabel);
+
+        TextField userTextField = createStyledTextField(loginPane, w / 2 - 70, h / 2 - 100, "请输入用户名");
+        PasswordField pwBox = createStyledPwField(loginPane, w / 2 - 70, h / 2 - 40, "请输入密码");
+
+        createStyledButton(loginPane, w / 2 - 85, h / 2 + 30, 70, "注册").setOnAction(_ -> handleLogin(stage, "register", userTextField.getText(), pwBox.getText()));
+        createStyledButton(loginPane, w / 2 + 15, h / 2 + 30, 70, "登录").setOnAction(_ -> handleLogin(stage, "login", userTextField.getText(), pwBox.getText()));
+        createStyledButton(loginPane, w / 2 - 85, h / 2 + 90, 170, "游客模式").setOnAction(_ -> handleLogin(stage, "guest", userTextField.getText(), pwBox.getText()));
+        createStyledButton(loginPane, w - 110, h - 50, 100, "退出游戏").setOnAction(_ -> handleLogin(stage, "exit", userTextField.getText(), pwBox.getText()));
+        stage.setTitle("用户登录");
+        stage.show();
+    }
+
 
     private void handleLogin(Stage stage, String choice, String username, String password) {
         System.out.println(choice + ": 用户名=" + username + ", 密码=" + password + "->" + hashPassword(password));
@@ -274,26 +260,27 @@ public class Application extends javafx.application.Application {
 
     private void lobbyPane(Stage stage) {
         System.out.println("加载游戏大厅");
-        VBox lobbyRoot = new VBox(10);  // 设置 VBox 间距为 10
-        lobbyRoot.setPadding(new Insets(10)); // 设置 VBox 的内边距
-        Image backgroundImage = new Image(getClass().getResource("/org/example/demo/lobby.jpg").toExternalForm()); // 替换为你的图片路径
-        BackgroundImage background = new BackgroundImage(backgroundImage, BackgroundRepeat.NO_REPEAT, BackgroundRepeat.NO_REPEAT, null, new BackgroundSize(BackgroundSize.AUTO, BackgroundSize.AUTO, false, false, true, true));
-        lobbyRoot.setBackground(new Background(background));
-
-        VBox listBox = new VBox(10);
-        HBox buttonBox = new HBox(20);
-        buttonBox.setAlignment(Pos.BOTTOM_CENTER);
-        buttonBox.setPadding(new Insets(10));
-        createLobbyButton(buttonBox, 120, "开始游戏").setOnAction(_ -> selectMode(stage));
-        createLobbyButton(buttonBox, 120, "查看榜单").setOnAction(_ -> checkoutLeaderboard());
-        createLobbyButton(buttonBox, 120, "退出登录").setOnAction(_ -> out.println("logout:" + name));
-        lobbyRoot.getChildren().add(listBox);
-        lobbyRoot.getChildren().add(buttonBox);
-
-        lobbyThread = new Thread(() -> handleLobby(stage, listBox));
-        lobbyThread.start();
-        lobbyScene = new Scene(lobbyRoot, 500, 500);
         Platform.runLater(() -> {
+            backgroundPlayer.stop();
+            VBox lobbyRoot = new VBox(10);
+            lobbyRoot.setPadding(new Insets(10));
+            Image backgroundImage = new Image(getClass().getResource("/org/example/demo/lobby.jpg").toExternalForm()); // 替换为你的图片路径
+            BackgroundImage background = new BackgroundImage(backgroundImage, BackgroundRepeat.NO_REPEAT, BackgroundRepeat.NO_REPEAT, null, new BackgroundSize(BackgroundSize.AUTO, BackgroundSize.AUTO, false, false, true, true));
+            lobbyRoot.setBackground(new Background(background));
+
+            VBox listBox = new VBox(10);
+            HBox buttonBox = new HBox(20);
+            buttonBox.setAlignment(Pos.BOTTOM_CENTER);
+            buttonBox.setPadding(new Insets(10));
+            createLobbyButton(buttonBox, 120, "查看榜单").setOnAction(_ -> checkoutLeaderboard());
+            createLobbyButton(buttonBox, 120, "开始游戏").setOnAction(_ -> selectMode(stage));
+            createLobbyButton(buttonBox, 120, "退出登录").setOnAction(_ -> out.println("logout:" + name));
+            lobbyRoot.getChildren().add(listBox);
+            lobbyRoot.getChildren().add(buttonBox);
+
+            lobbyThread = new Thread(() -> handleLobby(stage, listBox));
+            lobbyThread.start();
+            lobbyScene = new Scene(lobbyRoot, 500, 500);
             stage.setTitle("游戏大厅");
             stage.setScene(lobbyScene);
             stage.show();
@@ -308,6 +295,9 @@ public class Application extends javafx.application.Application {
                     System.out.println("Server2: " + response);
                     if ("logout successfully".equals(response)) {
                         Platform.runLater(() -> {
+                            backgroundPlayer.play();
+                            backgroundPlayer.seek(Duration.ZERO);
+                            System.out.println("开启mp4");
                             stage.setTitle("用户登录");
                             stage.setScene(loginScene);
                             stage.show();

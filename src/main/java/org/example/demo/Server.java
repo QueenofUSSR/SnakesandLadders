@@ -445,9 +445,7 @@ public class Server {
                                             }
                                             if (over) {
                                                 games.remove(name);
-
                                                 saveGame(name,g);
-
                                                 System.out.println("游戏结束，" + name + "的对局已被删除");
                                                 if (!"单机模式".equals(g.mode)) {
                                                     games.remove(parts[3]);

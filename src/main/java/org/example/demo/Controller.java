@@ -3,7 +3,6 @@ package org.example.demo;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.application.Platform;
-import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.geometry.Pos;
 import javafx.scene.canvas.Canvas;
@@ -180,19 +179,13 @@ public class Controller {
         Random r = new Random();
         int num = r.nextInt(6) + 1;
         Timeline timeline = new Timeline();
-        timeline.getKeyFrames().add(new KeyFrame(Duration.ZERO, event -> {
-            diceLabel.setText(name+"\n骰子点数：" + (r.nextInt(6) + 1));
-        }));
+        timeline.getKeyFrames().add(new KeyFrame(Duration.ZERO, _ -> diceLabel.setText(name + "\n骰子点数：" + (r.nextInt(6) + 1))));
         for (int i = 1; i <= 10; i++) {
-            timeline.getKeyFrames().add(new KeyFrame(Duration.millis(50 * i), event -> {
-                diceLabel.setText(name+"\n骰子点数：" + (r.nextInt(6) + 1));
-            }));
+            timeline.getKeyFrames().add(new KeyFrame(Duration.millis(50 * i), _ -> diceLabel.setText(name + "\n骰子点数：" + (r.nextInt(6) + 1))));
         }
-        timeline.getKeyFrames().add(new KeyFrame(Duration.millis(600), event -> {
-            diceLabel.setText(name+"\n骰子点数：" + num);
-        }));
+        timeline.getKeyFrames().add(new KeyFrame(Duration.millis(600), _ -> diceLabel.setText(name + "\n骰子点数：" + num)));
         timeline.play();
-        timeline.setOnFinished(event -> {
+        timeline.setOnFinished(_ -> {
             System.out.println("自己点数为：" + num);
             int oldPos = Integer.parseInt(posLabel1.getText());
             int newPos = oldPos + num;
@@ -214,23 +207,14 @@ public class Controller {
     public void handleRoll2() {
         Random r = new Random();
         int num = r.nextInt(6) + 1;
-
         Timeline timeline = new Timeline();
-        timeline.getKeyFrames().add(new KeyFrame(Duration.ZERO,event->{
-            diceLabel.setText(opponent+"\n骰子点数：" + (r.nextInt(6) + 1));
-        }));
-        for(int i=1;i<=10;i++){
-            timeline.getKeyFrames().add(new KeyFrame(Duration.millis(50*i),event->{
-                diceLabel.setText(opponent+"\n骰子点数：" + (r.nextInt(6) + 1));
-            }));
+        timeline.getKeyFrames().add(new KeyFrame(Duration.ZERO, _ -> diceLabel.setText(opponent + "\n骰子点数：" + (r.nextInt(6) + 1))));
+        for (int i = 1; i <= 10; i++) {
+            timeline.getKeyFrames().add(new KeyFrame(Duration.millis(50 * i), _ -> diceLabel.setText(opponent + "\n骰子点数：" + (r.nextInt(6) + 1))));
         }
-        timeline.getKeyFrames().add(new KeyFrame(Duration.millis(600),event->{
-            diceLabel.setText(opponent+"\n骰子点数：" + num);
-        }));
-
+        timeline.getKeyFrames().add(new KeyFrame(Duration.millis(600), _ -> diceLabel.setText(opponent + "\n骰子点数：" + num)));
         timeline.play();
-
-        timeline.setOnFinished(event ->{
+        timeline.setOnFinished(_ -> {
             System.out.println(opponent + "点数为：" + num);
             int oldPos = Integer.parseInt(posLabel2.getText());
             int newPos = oldPos + num;
@@ -330,5 +314,7 @@ public class Controller {
         out.println("game:load");
     }
 
-    public void handleSave() { out.println("game:save"); }
+    public void handleSave() {
+        out.println("game:save");
+    }
 }
