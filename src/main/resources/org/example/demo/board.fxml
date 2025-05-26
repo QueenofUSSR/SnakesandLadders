@@ -3,6 +3,7 @@
 <?import javafx.scene.layout.Pane?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.layout.VBox?>
+<?import javafx.scene.image.ImageView?>
 <VBox xmlns="http://javafx.com/javafx/22.0.1" xmlns:fx="http://javafx.com/fxml"
       fx:controller="org.example.demo.Controller" style="-fx-background-color: #f0f8ff;"
       stylesheets="@styles.css">
@@ -27,6 +28,7 @@
             <Button fx:id="loadBtn" text="读取存档" onAction="#handleLoad" styleClass="button"/>
 
             <Label fx:id="diceLabel"  alignment="CENTER" prefWidth="100" prefHeight="30" />
+            <ImageView fx:id="diceGIF"/>
         </VBox>
     </HBox>
 </VBox>
