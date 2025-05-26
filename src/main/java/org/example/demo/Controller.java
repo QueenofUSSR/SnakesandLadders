@@ -9,15 +9,23 @@ import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import javafx.scene.media.Media;
+import javafx.scene.media.MediaPlayer;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.util.Duration;
 
+import java.io.File;
 import java.io.PrintWriter;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
 import java.util.Random;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -52,6 +60,11 @@ public class Controller {
 
     @FXML
     private Label diceLabel;
+    @FXML
+    private ImageView diceGIF;
+
+    private static final Media ButtonEffect = new Media(Objects.requireNonNull(Controller.class.getResource("/org/example/demo/Audio/ButtonPressed.mp3")).toString());
+    private static final MediaPlayer ButtonAudio = new MediaPlayer(ButtonEffect);
 
     @FXML
     public void initialize(PrintWriter out, String name, String oppo, String curr, int p1, int p2, int[][] board, int mode) {
@@ -176,16 +189,15 @@ public class Controller {
     // 生成一个点数
     @FXML
     public void handleRoll1() {
+        Platform.runLater(() -> {
+            ButtonAudio.stop();
+            ButtonAudio.play();
+        });
+
         Random r = new Random();
         int num = r.nextInt(6) + 1;
-        Timeline timeline = new Timeline();
-        timeline.getKeyFrames().add(new KeyFrame(Duration.ZERO, _ -> diceLabel.setText(name + "\n骰子点数：" + (r.nextInt(6) + 1))));
-        for (int i = 1; i <= 10; i++) {
-            timeline.getKeyFrames().add(new KeyFrame(Duration.millis(50 * i), _ -> diceLabel.setText(name + "\n骰子点数：" + (r.nextInt(6) + 1))));
-        }
-        timeline.getKeyFrames().add(new KeyFrame(Duration.millis(600), _ -> diceLabel.setText(name + "\n骰子点数：" + num)));
-        timeline.play();
-        timeline.setOnFinished(_ -> {
+
+        playDiceRoll(diceGIF,num,diceLabel,name,()->{
             System.out.println("自己点数为：" + num);
             int oldPos = Integer.parseInt(posLabel1.getText());
             int newPos = oldPos + num;
@@ -205,16 +217,15 @@ public class Controller {
     // 单机时生成另一个点数
     @FXML
     public void handleRoll2() {
+        Platform.runLater(() -> {
+            ButtonAudio.stop();
+            ButtonAudio.play();
+        });
+
         Random r = new Random();
         int num = r.nextInt(6) + 1;
-        Timeline timeline = new Timeline();
-        timeline.getKeyFrames().add(new KeyFrame(Duration.ZERO, _ -> diceLabel.setText(opponent + "\n骰子点数：" + (r.nextInt(6) + 1))));
-        for (int i = 1; i <= 10; i++) {
-            timeline.getKeyFrames().add(new KeyFrame(Duration.millis(50 * i), _ -> diceLabel.setText(opponent + "\n骰子点数：" + (r.nextInt(6) + 1))));
-        }
-        timeline.getKeyFrames().add(new KeyFrame(Duration.millis(600), _ -> diceLabel.setText(opponent + "\n骰子点数：" + num)));
-        timeline.play();
-        timeline.setOnFinished(_ -> {
+
+        playDiceRoll(diceGIF,num,diceLabel,opponent,()->{
             System.out.println(opponent + "点数为：" + num);
             int oldPos = Integer.parseInt(posLabel2.getText());
             int newPos = oldPos + num;
@@ -227,6 +238,47 @@ public class Controller {
             rollButt1.setDisable(false);
             rollButt2.setDisable(true);
         });
+    }
+
+    //骰子动画
+    public static void playDiceRoll(ImageView imageView, int diceNum,Label diceLabel,String player,Runnable onFinished) {
+        List<Image> frames = new ArrayList<>();
+        for (int i = 1; i <= 12; i++) {
+            frames.add(new Image(Objects.requireNonNull(Controller.class.getResource(
+                    "/org/example/demo/GIF/0"+ i + ".gif")).toExternalForm()));
+        }
+        frames.add(new Image(Objects.requireNonNull(Controller.class.getResource(
+                "/org/example/demo/GIF/"+ diceNum + ".gif")).toExternalForm()));
+
+        Timeline timeline = new Timeline();
+
+        // 播放前12帧动画（每帧 50ms）
+        for (int i = 0; i < frames.size(); i++) {
+            final int index = i;
+            timeline.getKeyFrames().add(new KeyFrame(Duration.millis(50 * i),event->{
+                diceLabel.setText(player);
+                imageView.setImage(frames.get(index));
+            }));
+        }
+
+        // 在最后加一帧：显示最终结果 diceNum.gif（时间为第13帧）
+        timeline.getKeyFrames().add(
+                new KeyFrame(Duration.millis(50 * frames.size()), e -> {
+                    diceLabel.setText(player);
+                    Image finalFrame = new Image(Objects.requireNonNull(
+                            Controller.class.getResource("/org/example/demo/GIF/" + diceNum + ".gif")
+                    ).toExternalForm());
+                    imageView.setImage(finalFrame);
+                })
+        );
+
+        timeline.setOnFinished(e -> {
+            if (onFinished != null) {
+                onFinished.run();
+            }
+        });
+
+        timeline.play();
     }
 
     // 服务器传回对方点数
@@ -314,7 +366,5 @@ public class Controller {
         out.println("game:load");
     }
 
-    public void handleSave() {
-        out.println("game:save");
-    }
+    public void handleSave() { out.println("game:save"); }
 }
