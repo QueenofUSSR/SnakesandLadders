@@ -14,10 +14,13 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import javafx.scene.media.Media;
+import javafx.scene.media.MediaPlayer;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.util.Duration;
 
+import java.io.File;
 import java.io.PrintWriter;
 import java.util.Random;
 import java.util.concurrent.Executors;
@@ -53,6 +56,9 @@ public class Controller {
 
     @FXML
     private Label diceLabel;
+
+    private static final Media ButtonEffect = new Media(Controller.class.getResource("/org/example/demo/Audio/ButtonPressed.mp3").toString());
+    private static final MediaPlayer ButtonAudio = new MediaPlayer(ButtonEffect);
 
     @FXML
     public void initialize(PrintWriter out, String name, String oppo, String curr, int p1, int p2, int[][] board, int mode) {
@@ -177,6 +183,11 @@ public class Controller {
     // 生成一个点数
     @FXML
     public void handleRoll1() {
+        Platform.runLater(() -> {
+            ButtonAudio.stop();
+            ButtonAudio.play();
+        });
+
         Random r = new Random();
         int num = r.nextInt(6) + 1;
         Timeline timeline = new Timeline();
@@ -212,6 +223,12 @@ public class Controller {
     // 单机时生成另一个点数
     @FXML
     public void handleRoll2() {
+        //一半有声儿 另一半没有
+        Platform.runLater(() -> {
+            ButtonAudio.stop();
+            ButtonAudio.play();
+        });
+
         Random r = new Random();
         int num = r.nextInt(6) + 1;
 
