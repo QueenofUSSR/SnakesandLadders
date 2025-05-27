@@ -245,6 +245,12 @@ public class Application extends javafx.application.Application {
                     name = username;
                     lobbyPane(stage);
                 }
+                else if("This name is already in use!".equals(response)){
+                    Alert alert = new Alert(Alert.AlertType.ERROR, "该用户已存在！");
+                    alert.setTitle("错误");
+                    alert.setHeaderText(null);
+                    alert.showAndWait();
+                }
             }
         }
     }
