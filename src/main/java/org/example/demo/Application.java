@@ -602,7 +602,7 @@ public class Application extends javafx.application.Application {
 
     // 查看排行榜：实时计算/对局结束更新
     private void checkoutLeaderboard() {
-
+        Server.loadRecords(true);
     }
 
     //最开始分发棋盘和重新载入时调用

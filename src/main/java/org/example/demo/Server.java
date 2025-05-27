@@ -5,6 +5,7 @@ import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
+import javax.swing.*;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -110,7 +111,82 @@ public class Server {
         }
     }
 
-    public static void loadRecords() {
+    public static void loadRecords(boolean flag){
+        String filePath = "src/main/resources/org/example/demo/records.txt";
+        File file = new File(filePath);
+        if (!file.exists()) {
+            JOptionPane.showMessageDialog(null, "记录文件未找到: " + filePath, "错误", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        Map<String, Records> playerMap = new HashMap<>();
+        Comparator<Records> recordComparator = (r1, r2) -> {
+            if (r1.wins != r2.wins) {
+                return Integer.compare(r2.wins, r1.wins); // wins 降序
+            } else {
+                return Integer.compare(r1.defeats, r2.defeats); // defeats 升序
+            }
+        };
+
+        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+            String line;
+            boolean hasContent = false;
+            while ((line = reader.readLine()) != null) {
+                hasContent = true;
+                String[] temp = line.split(":");
+                if (temp.length < 2) continue;
+
+                String[] parts = temp[1].trim().split(" {2}");
+                if (parts.length < 3) continue;
+
+                String player1 = parts[0].trim();
+                String player2 = parts[2].trim();
+                String result = parts[1].trim();
+
+                playerMap.putIfAbsent(player1, new Records(player1));
+                playerMap.putIfAbsent(player2, new Records(player2));
+
+                switch (result) {
+                    case "《躺赢》":
+                    case "《完胜》":
+                    case "《胜利》":
+                        playerMap.get(player1).wins++;
+                        playerMap.get(player2).defeats++;
+                        break;
+                    case "《挂机》":
+                    case "《失败》":
+                    case "《逃跑》":
+                        playerMap.get(player2).wins++;
+                        playerMap.get(player1).defeats++;
+                        break;
+                }
+            }
+
+            if (!hasContent) {
+                JOptionPane.showMessageDialog(null, "记录文件为空", "提示", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            PriorityQueue<Records> resultQueue = new PriorityQueue<>(recordComparator);
+            resultQueue.addAll(playerMap.values());
+
+            StringBuilder top3 = new StringBuilder("🏆 Top 3 Players:\n");
+            for (int i = 1; i <= 3 && !resultQueue.isEmpty(); i++) {
+                Records r = resultQueue.poll();
+                top3.append(i).append(". ").append(r.player).append(" 胜利次数: ").append(r.wins).append(" 失败次数: ").append(r.defeats).append("\n");
+            }
+
+            JFrame frame = new JFrame("游戏统计分析器");
+            frame.setVisible(false);
+            frame.setIconImage(null);
+
+            JOptionPane.showMessageDialog(frame, top3.toString(), "榜单", JOptionPane.INFORMATION_MESSAGE);
+        } catch (IOException e) {
+            JOptionPane.showMessageDialog(null, "读取记录时发生错误: " + e.getMessage(), "错误", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private static void loadRecords() {
         records = new HashMap<>();
         try (BufferedReader reader = new BufferedReader(new FileReader("src/main/resources/org/example/demo/records.txt"))) {
             String line;
@@ -610,6 +686,17 @@ public class Server {
             this.stairwayStat.put(u2, 1);
             this.deadLockStat.put(u1, 2);
             this.deadLockStat.put(u2, 2);
+        }
+    }
+
+    static class Records{
+        String player;
+        int wins;
+        int defeats;
+
+        public Records(String player){
+            this.player=player;
+            this.wins=0; this.defeats=0;
         }
     }
 }
