@@ -216,7 +216,18 @@ public class Controller {
         });
 
         Random r = new Random();
-        int num = r.nextInt(6) + 1;
+        int numTmp = r.nextInt(6) + 1;
+
+        if (dead==0) {
+            if (stairway!=0) {
+                numTmp = r.nextInt(20) + 1;
+                stairway--;
+            }
+        } else {
+            dead--;
+            numTmp = 1;
+        }
+        int num = numTmp;
 
         if (mode == 0) { // 单机
             rollButt1.setDisable(true);
