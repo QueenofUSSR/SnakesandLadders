@@ -394,11 +394,11 @@ public class Server {
                 boolean isGuest = false;
                 while ((message = in.readLine()) != null) {
                     //每30s自动保存一次
-                    if(System.currentTimeMillis()-saveStartTime>=30*1000 && name !=null){
-                        saveGame(name,games.get(name));
-                        saveStartTime = System.currentTimeMillis();
-                        System.out.println("AutoSave Complete.");
-                    }
+//                    if(System.currentTimeMillis()-saveStartTime>=30*1000 && name !=null){
+//                        saveGame(name,games.get(name));
+//                        saveStartTime = System.currentTimeMillis();
+//                        System.out.println("AutoSave Complete.");
+//                    }
 
                     System.out.println("Client" + clientSocket.getInetAddress() + "/" + name + ": " + message);
                     if (isGuest) {

@@ -119,7 +119,7 @@ public class Application extends javafx.application.Application {
                 System.out.println("尝试连接服务器，尝试次数：" + ++tryNum);
                 try {
                     Thread.sleep(2000);
-                    socket = new Socket("localhost", 12345);
+                    socket = new Socket("10.25.127.184", 12345);
                     in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
                     out = new PrintWriter(socket.getOutputStream(), true);
                     break;

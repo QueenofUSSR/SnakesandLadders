@@ -218,14 +218,15 @@ public class Controller {
         Random r = new Random();
         int num = r.nextInt(6) + 1;
 
-        if (mode == 0) { // 单机
-            rollButt1.setDisable(true);
-        }
+
+        rollButt1.setDisable(true);
         playDiceRoll(diceGIF,num,diceLabel,name,()->{
             System.out.println("自己点数为：" + num);
             int oldPos = Integer.parseInt(posLabel1.getText());
             int newPos = oldPos + num;
-            newPos = multiMovePiece(playerCircles[0], posLabel1, oldPos, newPos, true,()->rollButt2.setDisable(false));
+            newPos = multiMovePiece(playerCircles[0], posLabel1, oldPos, newPos, true,()->{
+                if(mode==0) rollButt2.setDisable(false);
+            });
             if (newPos == 100) {
                 out.println("game:over:win:" + opponent + ":1");
             } else {
