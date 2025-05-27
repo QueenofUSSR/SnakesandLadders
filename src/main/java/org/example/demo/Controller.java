@@ -310,25 +310,33 @@ public class Controller {
     // 连续跳跃
     private int multiMovePiece(Circle circle, Label label, int oldPos, int newPos, boolean isP1) {
         System.out.println("Player " + (isP1 ? name : opponent) + " move from " + oldPos + " to " + newPos);
+        boolean ifOverHundred = false;
         if (newPos > 100) {
             newPos = 200 - newPos;
+            ifOverHundred = true;
         }
         int finalNewPos0 = newPos;
-        if (oldPos + 1 == newPos || (oldPos - 1) / 10 == (newPos - 1) / 10) {
-            movePiece(circle, label, oldPos, newPos, isP1);
-        } else if (oldPos % 10 == 0 || oldPos % 10 == 1) {
-            int tempPos = oldPos + 1;
-            movePiece(circle, label, oldPos, tempPos, isP1);
-            scheduler.schedule(() -> movePiece(circle, label, tempPos, finalNewPos0, isP1), 600L, TimeUnit.MILLISECONDS);
-        } else if (newPos % 10 == 0 || newPos % 10 == 1) {
-            int tempPos = oldPos / 10 * 10 + 10;
-            movePiece(circle, label, oldPos, tempPos, isP1);
-            scheduler.schedule(() -> movePiece(circle, label, tempPos, finalNewPos0, isP1), 600L, TimeUnit.MILLISECONDS);
-        } else {
-            int tempPos = oldPos / 10 * 10 + 10;
-            movePiece(circle, label, oldPos, tempPos, isP1);
-            scheduler.schedule(() -> movePiece(circle, label, tempPos, tempPos + 1, isP1), 600L, TimeUnit.MILLISECONDS);
-            scheduler.schedule(() -> movePiece(circle, label, tempPos + 1, finalNewPos0, isP1), 1200L, TimeUnit.MILLISECONDS);
+        if(ifOverHundred){
+            movePiece(circle, label, oldPos, 100, isP1);
+            scheduler.schedule(() -> movePiece(circle, label, 100, finalNewPos0, isP1), 600L, TimeUnit.MILLISECONDS);
+        }
+        else{
+            if (oldPos + 1 == newPos || (oldPos - 1) / 10 == (newPos - 1) / 10) {
+                movePiece(circle, label, oldPos, newPos, isP1);
+            } else if (oldPos % 10 == 0 || oldPos % 10 == 1) {
+                int tempPos = oldPos + 1;
+                movePiece(circle, label, oldPos, tempPos, isP1);
+                scheduler.schedule(() -> movePiece(circle, label, tempPos, finalNewPos0, isP1), 600L, TimeUnit.MILLISECONDS);
+            } else if (newPos % 10 == 0 || newPos % 10 == 1) {
+                int tempPos = oldPos / 10 * 10 + 10;
+                movePiece(circle, label, oldPos, tempPos, isP1);
+                scheduler.schedule(() -> movePiece(circle, label, tempPos, finalNewPos0, isP1), 600L, TimeUnit.MILLISECONDS);
+            } else {
+                int tempPos = oldPos / 10 * 10 + 10;
+                movePiece(circle, label, oldPos, tempPos, isP1);
+                scheduler.schedule(() -> movePiece(circle, label, tempPos, tempPos + 1, isP1), 600L, TimeUnit.MILLISECONDS);
+                scheduler.schedule(() -> movePiece(circle, label, tempPos + 1, finalNewPos0, isP1), 1200L, TimeUnit.MILLISECONDS);
+            }
         }
         int effect = board[(newPos - 1) / 10][(newPos - 1) % 10];
         int time = 1;
@@ -338,7 +346,11 @@ public class Controller {
             int finalOldPos = oldPos;
             int finalNewPos = newPos;
             System.out.println("Player " + current + " get effect1 " + effect + " and move to " + newPos);
-            scheduler.schedule(() -> movePiece(circle, label, finalOldPos, finalNewPos, isP1), time * 800L, TimeUnit.MILLISECONDS);
+            if(ifOverHundred){
+                scheduler.schedule(() -> movePiece(circle, label, finalOldPos, finalNewPos, isP1), time * 1200L, TimeUnit.MILLISECONDS);
+                ifOverHundred = false;
+            }
+            else scheduler.schedule(() -> movePiece(circle, label, finalOldPos, finalNewPos, isP1), time * 800L, TimeUnit.MILLISECONDS);
             time++;
             effect = board[(newPos - 1) / 10][(newPos - 1) % 10];
         }
