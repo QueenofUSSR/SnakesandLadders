@@ -1,6 +1,8 @@
 package org.example.demo;
 
 import javafx.animation.KeyFrame;
+import javafx.animation.PauseTransition;
+import javafx.animation.SequentialTransition;
 import javafx.animation.Timeline;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
@@ -216,20 +218,20 @@ public class Controller {
         Random r = new Random();
         int num = r.nextInt(6) + 1;
 
+        if (mode == 0) { // 单机
+            rollButt1.setDisable(true);
+        }
         playDiceRoll(diceGIF,num,diceLabel,name,()->{
             System.out.println("自己点数为：" + num);
             int oldPos = Integer.parseInt(posLabel1.getText());
             int newPos = oldPos + num;
-            newPos = multiMovePiece(playerCircles[0], posLabel1, oldPos, newPos, true);
+            newPos = multiMovePiece(playerCircles[0], posLabel1, oldPos, newPos, true,()->rollButt2.setDisable(false));
             if (newPos == 100) {
                 out.println("game:over:win:" + opponent + ":1");
             } else {
                 out.println("game:" + opponent + ":" + num + ":" + newPos);
             }
-            rollButt1.setDisable(true);
-            if (mode == 0) { // 单机
-                rollButt2.setDisable(false);
-            }
+
         });
     }
 
@@ -243,18 +245,17 @@ public class Controller {
 
         Random r = new Random();
         int num = r.nextInt(6) + 1;
+        rollButt2.setDisable(true);
         playDiceRoll(diceGIF, num, diceLabel, opponent, () -> {
             System.out.println(opponent + "点数为：" + num);
             int oldPos = Integer.parseInt(posLabel2.getText());
             int newPos = oldPos + num;
-            newPos = multiMovePiece(playerCircles[1], posLabel2, oldPos, newPos, false);
+            newPos = multiMovePiece(playerCircles[1], posLabel2, oldPos, newPos, false,()->rollButt1.setDisable(false));
             if (newPos == 100) {
                 out.println("game:over:win:" + name + ":2");
             } else {
                 out.println("game:" + name + ":" + num + ":" + newPos);
             }
-            rollButt1.setDisable(false);
-            rollButt2.setDisable(true);
         });
     }
 
@@ -280,7 +281,7 @@ public class Controller {
 
         // 在最后加一帧：显示最终结果 diceNum.gif（时间为第13帧）
         timeline.getKeyFrames().add(
-                new KeyFrame(Duration.millis(50 * frames.size()), e -> {
+                new KeyFrame(Duration.millis(50 * frames.size()), _-> {
                     diceLabel.setText(player);
                     Image finalFrame = new Image(Objects.requireNonNull(
                             Controller.class.getResource("/org/example/demo/GIF/" + (diceNum>6?20:diceNum) + ".gif")
@@ -303,12 +304,13 @@ public class Controller {
         System.out.println(opponent + "点数为：" + num);
         int oldPos = Integer.parseInt(posLabel2.getText());
         int newPos = oldPos + num;
-        multiMovePiece(playerCircles[1], posLabel2, oldPos, newPos, false);
-        rollButt1.setDisable(false);
+        multiMovePiece(playerCircles[1], posLabel2, oldPos, newPos, false,()->rollButt1.setDisable(false));
     }
 
     // 连续跳跃
-    private int multiMovePiece(Circle circle, Label label, int oldPos, int newPos, boolean isP1) {
+    private int multiMovePiece(Circle circle, Label label, int oldPos, int newPos, boolean isP1, Runnable callback) {
+        SequentialTransition sequence = new SequentialTransition();
+
         System.out.println("Player " + (isP1 ? name : opponent) + " move from " + oldPos + " to " + newPos);
         boolean ifOverHundred = false;
         if (newPos > 100) {
@@ -317,48 +319,77 @@ public class Controller {
         }
         int finalNewPos0 = newPos;
         if(ifOverHundred){
-            movePiece(circle, label, oldPos, 100, isP1);
-            scheduler.schedule(() -> movePiece(circle, label, 100, finalNewPos0, isP1), 600L, TimeUnit.MILLISECONDS);
+            Timeline firstMove = movePiece(circle, label, oldPos, 100, isP1);
+            PauseTransition delay = new PauseTransition(Duration.millis(100));
+            Timeline secondMove = movePiece(circle, label, 100, finalNewPos0, isP1);
+
+            sequence.getChildren().addAll(firstMove, delay, secondMove);
         }
         else{
             if (oldPos + 1 == newPos || (oldPos - 1) / 10 == (newPos - 1) / 10) {
-                movePiece(circle, label, oldPos, newPos, isP1);
+                Timeline firstMove = movePiece(circle, label, oldPos, newPos, isP1);
+
+                sequence.getChildren().addAll(firstMove);
             } else if (oldPos % 10 == 0 || oldPos % 10 == 1) {
                 int tempPos = oldPos + 1;
-                movePiece(circle, label, oldPos, tempPos, isP1);
-                scheduler.schedule(() -> movePiece(circle, label, tempPos, finalNewPos0, isP1), 600L, TimeUnit.MILLISECONDS);
+                Timeline firstMove = movePiece(circle, label, oldPos, tempPos, isP1);
+                PauseTransition delay = new PauseTransition(Duration.millis(100));
+                Timeline secondMove = movePiece(circle, label, tempPos, finalNewPos0, isP1);
+
+                sequence.getChildren().addAll(firstMove, delay, secondMove);
             } else if (newPos % 10 == 0 || newPos % 10 == 1) {
                 int tempPos = oldPos / 10 * 10 + 10;
-                movePiece(circle, label, oldPos, tempPos, isP1);
-                scheduler.schedule(() -> movePiece(circle, label, tempPos, finalNewPos0, isP1), 600L, TimeUnit.MILLISECONDS);
+                Timeline firstMove = movePiece(circle, label, oldPos, tempPos, isP1);
+                PauseTransition delay = new PauseTransition(Duration.millis(100));
+                Timeline secondMove = movePiece(circle, label, tempPos, finalNewPos0, isP1);
+
+                sequence.getChildren().addAll(firstMove, delay, secondMove);
             } else {
                 int tempPos = oldPos / 10 * 10 + 10;
-                movePiece(circle, label, oldPos, tempPos, isP1);
-                scheduler.schedule(() -> movePiece(circle, label, tempPos, tempPos + 1, isP1), 600L, TimeUnit.MILLISECONDS);
-                scheduler.schedule(() -> movePiece(circle, label, tempPos + 1, finalNewPos0, isP1), 1200L, TimeUnit.MILLISECONDS);
+                Timeline firstMove = movePiece(circle, label, oldPos, tempPos, isP1);
+                PauseTransition delay1 = new PauseTransition(Duration.millis(100));
+                PauseTransition delay2 = new PauseTransition(Duration.millis(100));
+                Timeline secondMove = movePiece(circle, label, tempPos, tempPos + 1, isP1);
+                Timeline thirdMove = movePiece(circle, label, tempPos + 1, finalNewPos0, isP1);
+
+                sequence.getChildren().addAll(firstMove, delay1, secondMove,delay2, thirdMove);
             }
         }
         int effect = board[(newPos - 1) / 10][(newPos - 1) % 10];
-        int time = 1;
         while (effect != 0) {
             oldPos = newPos;
             newPos += effect;
             int finalOldPos = oldPos;
             int finalNewPos = newPos;
             System.out.println("Player " + current + " get effect1 " + effect + " and move to " + newPos);
+
+
+
             if(ifOverHundred){
-                scheduler.schedule(() -> movePiece(circle, label, finalOldPos, finalNewPos, isP1), time * 1200L, TimeUnit.MILLISECONDS);
+                Timeline effectMove = movePiece(circle, label, finalOldPos, finalNewPos, isP1);
+                PauseTransition effectDelay = new PauseTransition(Duration.millis(100));
+                sequence.getChildren().addAll(effectDelay, effectMove);
                 ifOverHundred = false;
             }
-            else scheduler.schedule(() -> movePiece(circle, label, finalOldPos, finalNewPos, isP1), time * 800L, TimeUnit.MILLISECONDS);
-            time++;
+            else{
+                Timeline effectMove = movePiece(circle, label, finalOldPos, finalNewPos, isP1);
+                PauseTransition effectDelay = new PauseTransition(Duration.millis(100));
+                sequence.getChildren().addAll(effectDelay, effectMove);
+            }
             effect = board[(newPos - 1) / 10][(newPos - 1) % 10];
         }
+
+        sequence.play();
+
+        sequence.setOnFinished(_-> {
+            if (callback != null) callback.run();
+        });
+
         return newPos;
     }
 
 
-    private void movePiece(Circle circle, Label label, int oldPos, int newPos, boolean isP1) {
+    private Timeline movePiece(Circle circle, Label label, int oldPos, int newPos, boolean isP1) {
         Platform.runLater(() -> label.setText(String.valueOf(newPos)));
         int[] oldTrans = transformPosition(oldPos - 1);
         int[] newTrans = transformPosition(newPos - 1);
@@ -385,7 +416,7 @@ public class Controller {
             });
             timeline.getKeyFrames().add(keyFrame);
         }
-        timeline.play();
+        return timeline;
     }
 
 
